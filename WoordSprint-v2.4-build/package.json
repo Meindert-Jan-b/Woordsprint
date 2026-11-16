@@ -1,0 +1,23 @@
+{
+  "name": "woordsprint",
+  "version": "2.4.0",
+  "private": true,
+  "description": "WoordSprint: persoonlijke accounts, servergecontroleerde XP, coins, badges, missies, vrienden en klassement plus oefenstanden en StudyGo-import",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test tests/*.test.js",
+    "import-accounts": "node scripts/import-accounts.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "multer": "^1.4.5-lts.1",
+    "qrcode": "^1.5.4",
+    "sharp": "^0.33.5",
+    "tesseract.js": "^6.0.1",
+    "pdf-parse": "^1.1.1"
+  }
+}

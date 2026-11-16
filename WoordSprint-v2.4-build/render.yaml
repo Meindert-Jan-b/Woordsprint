@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: woordsprint
+    runtime: node
+    plan: free
+    buildCommand: npm install --omit=dev
+    startCommand: node server.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SECRET_KEY
+        sync: false
+      - key: OWNER_SETUP_CODE
+        sync: false
+      - key: WA_ACCESS_TOKEN
+        sync: false
+      - key: WA_PHONE_NUMBER_ID
+        sync: false
+      - key: WA_OWNER_NUMBER
+        sync: false
+      - key: WA_TEMPLATE_NAME
+        value: woordsprint_aanvraag
+      - key: WA_TEMPLATE_LANG
+        value: nl
+      - key: WA_GRAPH_VERSION
+        value: v27.0
