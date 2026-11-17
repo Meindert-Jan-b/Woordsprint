@@ -24,4 +24,12 @@ function openChapter(book,chapterId,lists,now=()=>new Date().toISOString()){
  lists.unshift(list);return {list,created:true};
 }
 function localBookStore(dir){function file(uid){return path.join(dir,crypto.createHash('sha256').update(String(uid)).digest('hex')+'.json');}return {async loadBook(uid){try{return JSON.parse(await fs.readFile(file(uid),'utf8'));}catch(e){if(e.code==='ENOENT')return null;throw e;}},async saveBook(uid,book){await fs.mkdir(dir,{recursive:true});const target=file(uid),tmp=target+'.'+crypto.randomUUID()+'.tmp';await fs.writeFile(tmp,JSON.stringify(book),{mode:0o600});await fs.rename(tmp,target);}};}
-module.exports={validateBook,bookIndex,openChapter,localBookStore};
+// Reserved storage key cannot collide with the UUID of a normal account.
+const SHARED_BOOK_KEY='__shared_finish_up_v1__';
+function sharedBookLibrary(store,ownerCheck){
+ return {
+  async load(){return store.loadBook(SHARED_BOOK_KEY);},
+  async publish(user,input){ownerCheck(user);if(input?.rightsConfirmed!==true)throw Error('Bevestig eerst dat je de inhoud met alle gebruikers mag delen.');const book=validateBook(input.book);await store.saveBook(SHARED_BOOK_KEY,book);return book;}
+ };
+}
+module.exports={validateBook,bookIndex,openChapter,localBookStore,sharedBookLibrary,SHARED_BOOK_KEY};

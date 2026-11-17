@@ -1,16 +1,12 @@
-# WoordSprint 2.5 – privéboek Finish Up + snellere controle
+# WoordSprint 2.6 – gedeelde boekbibliotheek
 
-## Update van de bestaande Render-installatie (WoordSprint-v2.4-build)
-
-1. Maak zo nodig een back-up van de Supabase-gegevens. Verwijder geen bestaande tabellen.
-2. Voer in Supabase SQL Editor het nieuwe bestand `supabase/book-v25.sql` eenmalig uit. Dit maakt uitsluitend een extra, afgeschermde boekentabel.
-3. Upload de map `WoordSprint-v2.4-build` uit deze ZIP naar de **hoofdmap** van dezelfde GitHub-repository. Behoud de mapnaam omdat Render deze als Root Directory gebruikt. Overschrijf de oude bestanden. Neem geen oude data/accounts.json, .env of geheime sleutels mee.
-4. Commit changes, op de main branch. Kies vervolgens Render → Manual Deploy → Deploy latest commit. De bestaande Root Directory, build en start command en alle environment variables blijven ongewijzigd.
-5. Open de Render-website, druk Ctrl+F5 en controleer dat linksonder v2.5 staat. Log in op je huidige account.
-6. Open Finish Up in de zijbalk (op mobiel via Mijn woordenlijsten → Finish Up), klik op Boek toevoegen en selecteer het afzonderlijke bestand `Finish-Up-prive-boek.json`. Dit bestand bevat een privétranscriptie van de aangeleverde PDF: **niet naar GitHub uploaden of openbaar delen**. Je moet het recht hebben het boek voor eigen gebruik te gebruiken. Het boek is alleen zichtbaar voor jouw ingelogde account; de server bewaart het apart van de voortgang.
-7. Klik op het gewenste hoofdstuk. De eerste keer wordt de lijst in je bestaande account opgeslagen, de volgende keer wordt dezelfde lijst geopend. Bestaande handmatige/importlijsten worden niet automatisch samengevoegd of weggegooid. Je oude XP, coins en vinkjes blijven behouden.
-
-De nieuwe verwerking verkort de ingebouwde wachtpauze bij goede meerkeuze van 1.350 ms tot 220 ms (sprint 120 ms) en berekent alleen de voortgang van de actieve lijst na een antwoord. Supabase moet wijzigingen nog wel bevestigen; de netwerkvertraging blijft mogelijk. De vorige accounts.js-hotfix is meegenomen. De geëxtraheerde woorden en contextzinnen zijn niet allemaal handmatig nagekeken; bewerk onjuiste OCR-woorden in de lijst. CSE-theorie is geen woordenlijst en wordt niet als volledige tekst opgenomen. Cadeaubonnen met echte geldwaarde voorlopig uitgeschakeld laten: anti-botbescherming niet afdoende.
+- Voer `supabase/book-v25.sql` uit als dat bij v2.5 nog niet is gebeurd. Er is geen nieuwe SQL-migratie nodig als die tabel al bestaat.
+- Upload de map `WoordSprint-v2.4-build` naar dezelfde GitHub-repository (hoofdmap); behoud de bestaande Render Root Directory. Deploy latest commit en vernieuw met Ctrl+F5. Controleer v2.6.
+- Log in als beheerder. Open Finish Up en kies het boekbestand waarvoor je distributietoestemming hebt. Vink de toestemmingsverklaring aan en klik op Publiceer voor iedereen. Doe dit maar één keer. Deel geen boekbestand zonder de benodigde rechten en upload het niet naar GitHub.
+- Alle ingelogde accounts kunnen vervolgens de hoofdstukken kiezen zonder eigen import. Alleen de beheerder kan het gedeelde boek vervangen. De bestaande persoonlijke hoofdstuklijsten blijven bewaard; een vervanging overschrijft die niet. De oude privéboekgegevens worden niet verwijderd, maar het boekmenu gebruikt nu de gedeelde catalogus.
+- XP, coins, vinkjes en woordenlijsten blijven per account. De snellere antwoordcontrole uit v2.5 (220 ms ingebouwde pauze) blijft behouden. Netwerkvertraging is nog mogelijk.
+- De boekinhoud is niet inbegrepen in de website-ZIP. De boektranscriptie is niet volledig handmatig nagekeken. Publiceer alleen met toestemming van de rechthebbende.
+- Cadeaubonnen met echte geldwaarde voorlopig uitgeschakeld laten; anti-botbescherming is nog niet afdoende.
 
 ## Eerdere installatiehandleiding
 

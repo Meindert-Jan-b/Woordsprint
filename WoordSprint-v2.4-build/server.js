@@ -7,7 +7,7 @@ const crypto = require('crypto');
 const {AsyncLocalStorage} = require('node:async_hooks');
 const {Accounts,GIFT_CARDS} = require('./lib/accounts');
 const {createCloudStore,createWriteQueue}=require('./lib/cloud-state');
-const {validateBook,bookIndex,openChapter,localBookStore}=require('./lib/private-book');
+const {bookIndex,openChapter,localBookStore,sharedBookLibrary}=require('./lib/private-book');
 const {config:whatsappConfig,sendOwnerMessage}=require('./lib/whatsapp');
 const multer = require('multer');
 const QRCode = require('qrcode');
@@ -183,10 +183,11 @@ function stateWithCompletion(user){
   return {...state,modeStatus,listBonuses};
 }
 app.get('/api/state',(_,res)=>res.json(stateWithCompletion(scope.getStore().user)));
-// Private book data has its own table, never part of the per-answer cloud snapshot.
-app.get('/api/book',async(req,res)=>{try{const user=scope.getStore().user;const book=await bookStore.loadBook(user.id);res.json({book:bookIndex(book,user.state.lists)});}catch(e){console.error('Book load:',e.message);error(res,503,'Boekopslag niet bereikbaar. Voer zo nodig supabase/book-v25.sql uit.');}});
-app.post('/api/book/import',async(req,res)=>{let book;try{book=validateBook(req.body);}catch(e){return error(res,400,e.message);}try{const user=scope.getStore().user;await bookStore.saveBook(user.id,book);res.json({book:bookIndex(book,user.state.lists)});}catch(e){console.error('Book save:',e.message);error(res,503,'Privéboek kon niet worden opgeslagen. Controleer de nieuwe Supabase-tabel.');}});
-app.post('/api/book/chapter/:id',async(req,res)=>{try{const user=scope.getStore().user;const book=await bookStore.loadBook(user.id);const result=openChapter(book,req.params.id,user.state.lists);if(result.created)save();res.json(result);}catch(e){console.error('Chapter open:',e.message);error(res,400,'Hoofdstuk kon niet worden geopend. Controleer je boekimport en probeer opnieuw.');}});
+// Shared catalog is stored once, outside per-account progress.
+const sharedLibrary=sharedBookLibrary(bookStore,u=>accounts.ownerCheck(u));
+app.get('/api/book',async(req,res)=>{try{const user=scope.getStore().user;const book=await sharedLibrary.load();res.json({book:bookIndex(book,user.state.lists)});}catch(e){console.error('Book load:',e.message);error(res,503,'Boekopslag niet bereikbaar. Voer zo nodig supabase/book-v25.sql uit.');}});
+app.post('/api/book/import',async(req,res)=>{const user=scope.getStore().user;try{accounts.ownerCheck(user);}catch(e){return error(res,403,e.message);}try{const book=await sharedLibrary.publish(user,req.body);res.json({book:bookIndex(book,user.state.lists)});}catch(e){console.error('Book publish:',e.message);error(res,400,e.message);}});
+app.post('/api/book/chapter/:id',async(req,res)=>{try{const user=scope.getStore().user;const book=await sharedLibrary.load();const result=openChapter(book,req.params.id,user.state.lists);if(result.created)save();res.json(result);}catch(e){console.error('Chapter open:',e.message);error(res,400,'Hoofdstuk kon niet worden geopend. Controleer of de beheerder het boek heeft gepubliceerd.');}});
 
 // Handmatig claimen voor lijsten die in v2.3 al vóór de update waren voltooid.
 app.post('/api/lists/:id/bonus/claim',(req,res)=>{
