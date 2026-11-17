@@ -32,6 +32,7 @@ let scanDraft={rows:[],raw:'',diagnostics:'',scanWarning:'',file:null,preview:nu
 const {normalized,isCorrect,alternatives}=WoordAnswers;
 const contextExamples=typeof WoordContextExamples!=='undefined'?WoordContextExamples:{};
 
+let bookData=null,bookLoading=false,bookError='',bookSearch='';
 let listSearch='';
 let listFilter='all';
 let lastRoute = '';
@@ -68,11 +69,12 @@ function render(){
   if(lastRoute!==hash && lastRoute.startsWith('play') && page!=='play'){cleanUpSession();session=null;}
   lastRoute=hash;
   const menu= ['list','edit','play','contexts'].includes(page)?'lists':page;
-  setActive(menu);pageTitle(({dashboard:'Dashboard',lists:'Mijn woordenlijsten',list:'Woordenlijst',edit:'Woordenlijst bewerken',play:'Oefensessie',games:'Spelletjes',scan:'Woordjes scannen',stats:'Statistieken',studygo:'StudyGo importeren',profile:'Mijn profiel',rewards:'Rewards shop',friends:'Vrienden',leaderboard:'Klassement',owner:'Beheerder' })[page]||'Dashboard');
+  setActive(menu);pageTitle(({dashboard:'Dashboard',lists:'Mijn woordenlijsten',list:'Woordenlijst',edit:'Woordenlijst bewerken',play:'Oefensessie',games:'Spelletjes',scan:'Woordjes scannen',stats:'Statistieken',studygo:'StudyGo importeren',book:'Mijn boek',profile:'Mijn profiel',rewards:'Rewards shop',friends:'Vrienden',leaderboard:'Klassement',owner:'Beheerder' })[page]||'Dashboard');
   let html;
   switch(page){
     case 'dashboard':html=renderDashboard();break;
     case 'lists':html=renderLists();break;
+    case 'book':html=renderBook();break;
     case 'list':html=renderListDetail(arg);break;
     case 'edit':html=renderEditor(arg);break;
     case 'contexts':html=renderContexts(arg);break;
@@ -122,8 +124,8 @@ function listBonusPanel(l){
  const label=b.allDone?(b.possibleCoins?`🎁 ${fmt(b.possibleCoins)} bonuscoins klaar!`:'✓ Deze woordparen zijn al beloond'):`🎯 ${b.completedModes}/${b.totalModes} oefenstanden klaar`;
  return `<div class="card card-pad list-bonus-panel"><div class="row" style="align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><h3 style="margin:0 0 6px">🪙 Complete-lijstbonus</h3><p class="muted tiny" style="margin:0">${esc(label)} · ${b.wordCount} unieke woorden · 40 coins per nieuw woord</p><p class="muted tiny" style="margin:6px 0 0">25 woorden = 1.000 coins · bonus slechts één keer per woordpaar (ook bij kopieën)</p></div>${b.allDone&&b.possibleCoins?`<button class="btn" data-action="claim-list-bonus" data-id="${esc(l.id)}">Claim ${fmt(b.possibleCoins)} coins</button>`:''}</div><div class="meter" style="margin-top:12px"><i style="width:${b.totalModes?Math.round(b.completedModes/b.totalModes*100):0}%"></i></div></div>`;
 }
-function listOrigin(l){return l.demo?'Voorbeeld':l.source==='studygo'?'StudyGo-import':l.source==='scan'?'Gescand':l.source==='manual'?'Zelf gemaakt':'Bestaande lijst';}
-function isImported(l){return l.source==='studygo'||l.source==='scan';}
+function listOrigin(l){return l.demo?'Voorbeeld':l.source==='studygo'?'StudyGo-import':l.source==='scan'?'Gescand':l.source==='book'?'Finish Up':l.source==='manual'?'Zelf gemaakt':'Bestaande lijst';}
+function isImported(l){return l.source==='studygo'||l.source==='scan'||l.source==='book';}
 function matchesList(l){const text=`${l.name} ${l.subject} ${listOrigin(l)}`.toLocaleLowerCase();return text.includes(listSearch.toLocaleLowerCase())&&(listFilter==='all'||(listFilter==='imported'&&isImported(l))||(listFilter==='own'&&!l.demo&&!isImported(l))||(listFilter==='demo'&&l.demo));}
 function listCard(l,i){return `<article class="list-simple card"><div class="list-simple-main"><span class="subject-icon alt${i%4}">${iconFor(l)}</span><div class="list-simple-copy"><a href="#list/${encodeURIComponent(l.id)}" class="list-simple-title">${esc(l.name)}</a><span class="list-simple-sub">${esc(l.subject)} · ${l.words.length} woorden · ${esc(listOrigin(l))} · 🎯 ${modeDoneSummary(l)}</span></div></div><div class="list-simple-actions"><span class="list-simple-pct">${masteryPct(l)}% geleerd</span><a class="btn btn-secondary btn-sm" href="#list/${encodeURIComponent(l.id)}">Bekijk woorden</a><button class="btn btn-sm" data-action="quick-learn" data-id="${esc(l.id)}">Slim leren →</button></div></article>`;}
 function listResults(){const matches=db.lists.filter(matchesList);return matches.length?matches.map((l,i)=>listCard(l,i)).join(''):`<div class="card empty-state"><h3>Geen lijsten gevonden</h3><p>Pas je zoekterm of filter aan. Je opgeslagen lijsten blijven bewaard.</p></div>`;}
@@ -137,9 +139,21 @@ function renderDashboard(){
     <div class="section-heading"><div><h2>Geïmporteerde woordenlijsten</h2><p>Al je StudyGo-lijsten overzichtelijk bij elkaar.</p></div><a href="#lists" class="simple-link">Open mijn lijsten →</a></div><section class="simple-list-grid">${db.lists.filter(isImported).slice(0,3).map((l,i)=>listCard(l,i)).join('')||`<div class="card card-pad"><p class="muted">Nog geen geïmporteerde lijst in deze versie. Je kunt wel al je bestaande lijsten bekijken.</p><a href="#studygo" class="btn btn-secondary btn-sm">Importeer StudyGo-lijst →</a></div>`}</section>
     <div class="section-heading"><div><h2>Blijf lekker oefenen</h2><p>Hoe vaker je herhaalt, hoe beter het blijft hangen.</p></div></div><div class="two-col"><div class="card card-pad"><div class="row space-between"><h3 style="margin:0">Activiteit deze week</h3><span class="tag">${fmt(answeredTotal())} antwoorden totaal</span></div><p class="muted tiny">Aantal beantwoorde woorden per dag</p>${graph()}</div><div class="tips-card"><div class="tips-row"><div class="tips-emoji">📸</div><div><h3>Woordjes in je boek?</h3><p>Maak met je telefoon een foto en zet ze in een leerbare woordenlijst. Je hoeft niet alles over te typen.</p><a class="btn btn-sm" href="#scan">Scan je woorden →</a></div></div></div></div>`;
 }
+function bookRows(){
+ if(!bookData)return '';
+ const query=bookSearch.trim().toLocaleLowerCase('nl');
+ const filtered=bookData.chapters.filter(c=>((c.number??'')+' '+c.title+' '+c.section).toLocaleLowerCase('nl').includes(query));
+ if(!filtered.length)return '<p class="muted">Geen hoofdstukken gevonden.</p>';
+ const sections=[...new Set(filtered.map(c=>c.section))];
+ return sections.map(section=>`<div class="section-heading"><h2>${esc(section)}</h2></div><div class="book-grid">${filtered.filter(c=>c.section===section).map(c=>{const l=db.lists.find(l=>l.bookChapter===c.id);return `<button class="card book-row" data-action="book-chapter" data-id="${esc(c.id)}"><span class="book-number">${c.number??'📘'}</span><span class="book-copy"><strong>${esc(c.title)}</strong><small>${c.wordCount} woorden${l?' · '+masteryPct(l)+'% geleerd':''}</small></span><span class="book-arrow">→</span></button>`;}).join('')}</div>`).join('');
+}
+function renderBook(){
+ return `<div class="page-heading"><div><span class="eyebrow">JOUW PRIVÉBOEK</span><h1>${esc(bookData?.title||'Finish Up')}</h1><p>Kies een hoofdstuk en oefen meteen met alle beschikbare leerstanden.</p></div><a href="#lists" class="btn btn-secondary">Mijn lijsten</a></div>${bookLoading?'<div class="card card-pad">Boek laden…</div>':bookError?`<div class="card card-pad"><p>${esc(bookError)}</p><button class="btn" data-action="book-refresh">Opnieuw proberen</button></div>`:''}<div class="card card-pad"><form id="book-import-form"><div class="row" style="flex-wrap:wrap;gap:12px"><div style="flex:1;min-width:190px"><strong>${bookData?'Boek vervangen':'Boek eenmalig toevoegen'}</strong><p class="muted tiny">Kies je eigen WoordSprint-boekbestand (.json). Alleen jouw account heeft toegang; bestaande geopende lijsten blijven bewaard.</p><input type="file" name="book" accept=".json,application/json" required></div><button class="btn" type="submit">Boek toevoegen</button></div></form></div>${bookData?`<div class="book-search"><input class="search-input" type="search" id="book-search" placeholder="Zoek hoofdstuknummer of onderwerp…" value="${esc(bookSearch)}" aria-label="Zoek hoofdstuk"></div><div id="book-results">${bookRows()}</div>`:''}`;
+}
+async function loadBook(){const uid=currentUser?.id;bookLoading=true;bookError='';try{const result=await request('/api/book');if(currentUser?.id===uid)bookData=result.book;}catch(e){if(currentUser?.id===uid){bookData=null;bookError=e.message;}}finally{if(currentUser?.id===uid)bookLoading=false;}}
 function renderLists(){
  const count=db.lists.filter(isImported).length;
- return `<div class="page-heading"><div><span class="eyebrow">AL JE LIJSTEN OP ÉÉN PLEK</span><h1>Mijn woordenlijsten</h1><p>Klik op een lijst om alle woordjes te bekijken, of begin direct met leren.</p></div><div class="toolbar"><a class="btn btn-secondary" href="#studygo">↧ Importeren</a><a class="btn" href="#edit/new">+ Nieuwe lijst</a></div></div>
+ return `<div class="page-heading"><div><span class="eyebrow">AL JE LIJSTEN OP ÉÉN PLEK</span><h1>Mijn woordenlijsten</h1><p>Klik op een lijst om alle woordjes te bekijken, of begin direct met leren.</p></div><div class="toolbar"><a class="btn btn-secondary" href="#book">📘 Finish Up</a><a class="btn btn-secondary" href="#studygo">↧ Importeren</a><a class="btn" href="#edit/new">+ Nieuwe lijst</a></div></div>
  <div class="list-directory card"><div class="list-directory-top"><div><strong>${db.lists.length} lijsten</strong><span>${count} geïmporteerd sinds deze functie wordt bijgehouden</span></div><input class="search-input" type="search" id="list-search" value="${esc(listSearch)}" placeholder="Zoek op naam of vak…" aria-label="Zoek woordenlijsten"></div>
  <div class="list-tabs" aria-label="Filter woordenlijsten">${[['all','Alle lijsten'],['imported','Geïmporteerd'],['own','Zelf gemaakt'],['demo','Voorbeelden']].map(([id,label])=>`<button data-action="lists-filter" data-filter="${id}" class="list-tab ${listFilter===id?'active':''}" aria-pressed="${listFilter===id}">${label}</button>`).join('')}</div></div>
  <section id="list-results" class="simple-list-grid">${listResults()}</section>
@@ -304,12 +318,15 @@ async function submitAnswer(given,selectedOption=null,choiceCorrect=null){
  if(!session||session.done||session.feedback||session.submitting)return;
  const active=session,q=currentQuestion();if(!q)return;
  session.submitting=true;
+ const pressed=selectedOption!==null?document.querySelectorAll('[data-action=choose-answer]')[selectedOption]:document.querySelector('#answer-form button[type=submit]');
+ if(pressed){pressed.setAttribute?.('aria-busy','true');pressed.classList?.add?.('checking-answer');}
  let result;
  try{
    const direction=q.aLang===session.list.fromLang?'reverse':'forward';
    result=await request('/api/practice',{method:'POST',body:{listId:session.list.id,wordId:q.wordId,given:String(given),mode:session.mode,direction,stage:q.stage}});
- }catch(e){toast('Antwoord kon niet gecontroleerd worden: '+e.message,true);if(session===active)session.submitting=false;return;}
+ }catch(e){toast('Antwoord kon niet gecontroleerd worden: '+e.message,true);if(session===active)session.submitting=false;if(pressed){pressed.removeAttribute?.('aria-busy');pressed.classList?.remove?.('checking-answer');}return;}
  if(session!==active||session.done)return;
+ if(pressed){pressed.removeAttribute?.('aria-busy');pressed.classList?.remove?.('checking-answer');}
  const correct=result.correct===true;
  session.submitting=false;session.selectedOption=selectedOption;
  session.answered++;if(correct)session.correct++;
@@ -328,7 +345,7 @@ async function submitAnswer(given,selectedOption=null,choiceCorrect=null){
  if(session.mode==='test'){nextQuestion();return;}
  session.feedback={correct,expected:result.expected||q.answer,given};render();
  if(session.mode==='sprint'||(getEffectiveMode()==='choice'&&correct)){
-  active.delay=setTimeout(()=>{if(session===active&&!active.done&&active.feedback)nextQuestion();},session.mode==='sprint'?440:1350);
+  active.delay=setTimeout(()=>{if(session===active&&!active.done&&active.feedback)nextQuestion();},session.mode==='sprint'?120:220);
  }
 }
 
@@ -417,10 +434,12 @@ function renderRewards(){const u=currentUser||{};const data=rewardsData||{catalo
 function renderFriends(){const data=friendsData||{friends:[],requests:[]};return `<div class="page-heading"><div><span class="eyebrow">SAMEN LEREN</span><h1>Mijn vrienden</h1><p>Voeg iemand toe met diens gebruikersnaam. Jullie zien elkaars XP, niet elkaars woordenlijsten.</p></div><a class="btn" href="#leaderboard">🏆 Klassement</a></div><div class="card card-pad"><h3>Vriend toevoegen</h3><form id="friend-form" class="row" style="flex-wrap:wrap"><input class="input" name="username" placeholder="Gebruikersnaam" required maxlength="20" style="flex:1;min-width:180px"><button class="btn">Verstuur verzoek</button></form></div>${data.requests.length?`<div class="card card-pad" style="margin-top:15px"><h3>Nieuwe verzoeken</h3>${data.requests.map(u=>`<div class="friend-row"><strong>${esc(u.username)}</strong><div class="row"><button class="btn btn-sm" data-action="friend-respond" data-id="${esc(u.id)}" data-accept="true">Accepteren</button><button class="btn btn-secondary btn-sm" data-action="friend-respond" data-id="${esc(u.id)}" data-accept="false">Afwijzen</button></div></div>`).join('')}</div>`:''}<div class="card card-pad" style="margin-top:15px"><h3>Vrienden (${data.friends.length})</h3>${data.friends.length?data.friends.map(u=>`<div class="friend-row"><div><strong>${esc(u.username)}</strong><p class="muted tiny" style="margin:0">Level ${u.level} · ${fmt(u.xp)} XP</p></div><button class="btn btn-secondary btn-sm" data-action="friend-remove" data-id="${esc(u.id)}">Verwijder</button></div>`).join(''):'Je hebt nog geen vrienden toegevoegd.'}</div>`;}
 function renderLeaderboard(){const u=currentUser;return `<div class="page-heading"><div><span class="eyebrow">WEKELIJKSE RANGLIJST</span><h1>Klassement 🏆</h1><p>Alleen echt verdiende XP telt mee. De week begint op maandag.</p></div></div><div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:16px"><button class="btn ${leaderScope==='friends'?'':'btn-secondary'}" data-action="leader-scope" data-scope="friends">Vrienden</button><button class="btn ${leaderScope==='global'?'':'btn-secondary'}" data-action="leader-scope" data-scope="global">Openbaar klassement</button></div><div class="card card-pad"><h3>Deze week</h3>${leaderboardData.length?leaderboardData.map((p,i)=>`<div class="leader-row"><strong>#${i+1} ${esc(p.username)}${p.id===u.id?' (jij)':''}</strong><span>${fmt(p.weeklyXp)} XP · Level ${p.level}</span></div>`).join(''):'Er zijn nog geen scores deze week.'}</div><div class="card card-pad" style="margin-top:15px"><h3>Privacy</h3><p class="muted tiny">Je staat standaard alleen bij je vrienden in het klassement. Je kunt zelf kiezen of je ook in het openbare klassement wilt verschijnen.</p><label class="row" style="gap:9px"><input type="checkbox" id="global-optin" ${u.privacy?.showGlobal?'checked':''}> Toon mijn naam en XP ook openbaar</label></div>`;}
 async function loadSocial(view){if(view==='owner'&&currentUser?.owner)ownerData=await request('/api/owner');if(view==='rewards'){rewardsData=await request('/api/rewards');giftData=await request('/api/giftcards');}if(view==='friends')friendsData=await request('/api/friends');if(view==='leaderboard')leaderboardData=await request('/api/leaderboard?scope='+leaderScope);}
-async function refreshAndRenderSocial(){const view=location.hash.slice(1).split('/')[0];if(['rewards','friends','leaderboard','owner'].includes(view)){await refreshProfile();await loadSocial(view);}render();}
+async function refreshAndRenderSocial(){const view=location.hash.slice(1).split('/')[0];if(view==='book'){bookLoading=true;render();await loadBook();if(location.hash==='#book')render();return;}if(['rewards','friends','leaderboard','owner'].includes(view)){await refreshProfile();await loadSocial(view);}render();}
 async function handleClick(e){const button=e.target.closest('[data-action]');if(!button)return;const action=button.dataset.action;const id=button.dataset.id;
  if(action==='auth-toggle'){authMode=button.dataset.mode==='register'?'register':'login';renderAuth();return;}
- if(action==='logout'){await request('/api/auth/logout',{method:'POST',body:{}});currentUser=null;rewardsData=null;friendsData=null;leaderboardData=[];cleanUpSession();session=null;location.hash='#dashboard';renderAuth();return;}
+ if(action==='book-refresh'){await loadBook();render();return;}
+ if(action==='book-chapter'){button.disabled=true;try{const existing=db.lists.find(l=>l.bookChapter===id);if(existing){navigate('list/'+encodeURIComponent(existing.id));return;}const r=await request('/api/book/chapter/'+encodeURIComponent(id),{method:'POST',body:{}});await refreshState();navigate('list/'+encodeURIComponent(r.list.id));}catch(e){button.disabled=false;throw e;}return;}
+ if(action==='logout'){bookData=null;bookError='';bookSearch='';await request('/api/auth/logout',{method:'POST',body:{}});currentUser=null;rewardsData=null;friendsData=null;leaderboardData=[];cleanUpSession();session=null;location.hash='#dashboard';renderAuth();return;}
  if(action==='buy-item'||action==='equip-item'){if(action==='buy-item'&&!confirm('Wil je deze beloning kopen met je coins?'))return;currentUser=await request('/api/shop/'+(action==='buy-item'?'buy':'equip'),{method:'POST',body:{itemId:button.dataset.item}});rewardsData=await request('/api/rewards');render();toast(action==='buy-item'?'Beloning gekocht!':'Beloning geactiveerd!');return;}
  if(action==='claim-list-bonus'){
    const l=getList(id);if(!l)return;
@@ -531,6 +550,8 @@ async function handleClick(e){const button=e.target.closest('[data-action]');if(
  }
 }
 async function handleSubmit(e){
+ if(e.target.id==='book-import-form'){e.preventDefault();const form=e.target,file=form.elements.book.files?.[0];if(!file)return;const button=form.querySelector('[type=submit]');button.disabled=true;try{if(file.size>3*1024*1024)throw Error('Boekbestand is te groot.');const data=JSON.parse(await file.text());const result=await request('/api/book/import',{method:'POST',body:data});bookData=result.book;bookError='';bookSearch='';render();toast('Boek toegevoegd: '+bookData.chapters.length+' lijsten.');}catch(err){button.disabled=false;toast(err.message,true);}return;}
+
  if(e.target.id==='auth-form'){e.preventDefault();const form=e.target;const u=form.elements.username.value.trim(),password=form.elements.password.value;try{const r=await request('/api/auth/'+(authMode==='register'?'register':'login'),{method:'POST',body:{username:u,password}});currentUser=r.user;await refreshState();config=await request('/api/config');navigate('dashboard');render();toast('Welkom '+currentUser.username+'!');}catch(err){toast(err.message,true);}return;}
  if(e.target.id==='owner-claim-form'){e.preventDefault();try{currentUser=await request('/api/owner/claim',{method:'POST',body:{code:e.target.elements.code.value}});toast('Beheerder geactiveerd!');render();}catch(err){toast(err.message,true);}return;}
  if(e.target.id==='legacy-form'){e.preventDefault();try{const r=await request('/api/profile/legacy',{method:'POST',body:{code:e.target.elements.code.value}});legacyAvailable=false;await refreshState();toast(r.count+' oude woordenlijsten overgezet!');navigate('lists');render();}catch(err){toast(err.message,true);}return;}
@@ -584,6 +605,7 @@ function handleChange(e){const t=e.target;
  }
 }
 function handleInput(e){const t=e.target;
+ if(t.id==='book-search'){bookSearch=t.value;$('#book-results').innerHTML=bookRows();return;}
  if(t.id==='studygo-paste'){studygoDraft.paste=t.value;return;}
  if(t.dataset.studygoSetting){studygoDraft[t.dataset.studygoSetting]=t.value;return;}
  if(t.dataset.studygoRow!==undefined){const row=studygoDraft.rows[Number(t.dataset.studygoRow)];if(row)row[t.dataset.side]=t.value;return;}

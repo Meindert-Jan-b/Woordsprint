@@ -1,6 +1,6 @@
 {
   "name": "woordsprint",
-  "version": "2.4.0",
+  "version": "2.5.0",
   "private": true,
   "description": "WoordSprint: persoonlijke accounts, servergecontroleerde XP, coins, badges, missies, vrienden en klassement plus oefenstanden en StudyGo-import",
   "main": "server.js",

@@ -7,6 +7,7 @@ const crypto = require('crypto');
 const {AsyncLocalStorage} = require('node:async_hooks');
 const {Accounts,GIFT_CARDS} = require('./lib/accounts');
 const {createCloudStore,createWriteQueue}=require('./lib/cloud-state');
+const {validateBook,bookIndex,openChapter,localBookStore}=require('./lib/private-book');
 const {config:whatsappConfig,sendOwnerMessage}=require('./lib/whatsapp');
 const multer = require('multer');
 const QRCode = require('qrcode');
@@ -21,6 +22,7 @@ const app = express();
 app.set('trust proxy',1); // Render terminates HTTPS before proxying to Node
 const CLOUD_MODE=!!(process.env.SUPABASE_URL||process.env.SUPABASE_SECRET_KEY);
 const cloudStore=CLOUD_MODE?createCloudStore():null;
+const bookStore=cloudStore||localBookStore(path.join(__dirname,'data','private-books'));
 let cloudQueue=null;
 app.get('/health',(_req,res)=>res.json({ok:true,storage:CLOUD_MODE?'supabase':'local'}));
 const PORT = Number(process.env.PORT || 3000);
@@ -166,21 +168,26 @@ function buildWords(input) {
     });
 }
 function error(res,status,message) { return res.status(status).json({error:message}); }
+const modeIds=['learn','type','flash','choice','dictation','hint','test','think','context','memory','match','scramble','sprint'];
+function completionForList(user,list){
+  const out={};for(const mode of modeIds){out[mode]={};for(const side of ['forward','reverse'])out[mode][side]=accounts.modeCompletion(user,list,mode,side);}
+  return out;
+}
 function stateWithCompletion(user){
   const state=user.state;
-  const modeIds=['learn','type','flash','choice','dictation','hint','test','think','context','memory','match','scramble','sprint'];
   const modeStatus={},listBonuses={};
   for(const list of state.lists){
-    modeStatus[list.id]={};
-    for(const mode of modeIds){
-      modeStatus[list.id][mode]={};
-      for(const side of ['forward','reverse'])modeStatus[list.id][mode][side]=accounts.modeCompletion(user,list,mode,side);
-    }
+    modeStatus[list.id]=completionForList(user,list);
     listBonuses[list.id]={forward:accounts.listBonusStatus(user,list,'forward'),reverse:accounts.listBonusStatus(user,list,'reverse')};
   }
   return {...state,modeStatus,listBonuses};
 }
 app.get('/api/state',(_,res)=>res.json(stateWithCompletion(scope.getStore().user)));
+// Private book data has its own table, never part of the per-answer cloud snapshot.
+app.get('/api/book',async(req,res)=>{try{const user=scope.getStore().user;const book=await bookStore.loadBook(user.id);res.json({book:bookIndex(book,user.state.lists)});}catch(e){console.error('Book load:',e.message);error(res,503,'Boekopslag niet bereikbaar. Voer zo nodig supabase/book-v25.sql uit.');}});
+app.post('/api/book/import',async(req,res)=>{let book;try{book=validateBook(req.body);}catch(e){return error(res,400,e.message);}try{const user=scope.getStore().user;await bookStore.saveBook(user.id,book);res.json({book:bookIndex(book,user.state.lists)});}catch(e){console.error('Book save:',e.message);error(res,503,'Privéboek kon niet worden opgeslagen. Controleer de nieuwe Supabase-tabel.');}});
+app.post('/api/book/chapter/:id',async(req,res)=>{try{const user=scope.getStore().user;const book=await bookStore.loadBook(user.id);const result=openChapter(book,req.params.id,user.state.lists);if(result.created)save();res.json(result);}catch(e){console.error('Chapter open:',e.message);error(res,400,'Hoofdstuk kon niet worden geopend. Controleer je boekimport en probeer opnieuw.');}});
+
 // Handmatig claimen voor lijsten die in v2.3 al vóór de update waren voltooid.
 app.post('/api/lists/:id/bonus/claim',(req,res)=>{
  const user=scope.getStore().user,list=user.state.lists.find(l=>l.id===req.params.id);
@@ -239,7 +246,7 @@ app.post('/api/practice',(req,res)=>{
     if(typeof req.body.given!=='string'||!req.body.given.trim())return error(res,400,'Het antwoord ontbreekt.');
     const user=scope.getStore().user;
     const result=accounts.reviewAnswer(user,list,word,req.body.given,req.body.mode,req.body.direction,req.body.stage);
-    res.json({...result,modeStatus:stateWithCompletion(user).modeStatus[list.id],listBonus:accounts.listBonusStatus(user,list,req.body.direction)});
+    res.json({...result,modeStatus:completionForList(user,list),listBonus:accounts.listBonusStatus(user,list,req.body.direction)});
   }catch(e){error(res,400,e.message);}
 });
 // The server verifies each matched word pair against an authenticated game session.
@@ -251,7 +258,7 @@ app.post('/api/game/start',(req,res)=>{
 app.post('/api/game/reveal',(req,res)=>{try{res.json(accounts.revealSelf(scope.getStore().user,req.body.gameId,req.body.wordId));}catch(e){error(res,400,e.message);}});
 app.post('/api/game/match',(req,res)=>{
  const l=db.lists.find(x=>x.id===req.body.listId);if(!l)return error(res,404,'Lijst niet gevonden.');
- try{const user=scope.getStore().user;const result=accounts.finishGamePair(user,l,req.body.gameId,req.body.frontId,req.body.backId,req.body.known===true);res.json({...result,modeStatus:stateWithCompletion(user).modeStatus[l.id],listBonus:accounts.listBonusStatus(user,l,req.body.direction)});}catch(e){error(res,400,e.message);}
+ try{const user=scope.getStore().user;const result=accounts.finishGamePair(user,l,req.body.gameId,req.body.frontId,req.body.backId,req.body.known===true);res.json({...result,modeStatus:completionForList(user,l),listBonus:accounts.listBonusStatus(user,l,req.body.direction)});}catch(e){error(res,400,e.message);}
 });
 // No client-reported bulk scores: only individually checked answers count.
 app.post('/api/practice/batch',(req,res)=>res.status(400).json({error:'Gebruik de gecontroleerde spelrondes voor XP.'}));

@@ -133,3 +133,6 @@
 .mode-status.mode-unavailable{background:rgba(129,129,146,.08);color:var(--muted,#70768e)}
 .mode-card.completed{outline:2px solid #43ae74;outline-offset:-2px}
 .mode-card.completed .mode-icon{color:#148348}
+
+/* v2.5 private book catalogue */
+.book-search{margin:20px 0 8px}.book-search .search-input{width:100%;max-width:540px}.book-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.book-row{display:flex;align-items:center;padding:14px;gap:13px;cursor:pointer;text-align:left;color:inherit;width:100%;font:inherit}.book-row:hover{border-color:#7762e9}.book-number{flex:0 0 42px;height:42px;display:grid;place-items:center;background:#eeeaff;border-radius:12px;font-weight:800;color:#6c55e3}.book-copy{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}.book-copy small{color:#7c8196}.book-arrow{color:#7762e9;font-weight:700}.checking-answer{opacity:.72;cursor:progress!important}.book-row:disabled{opacity:.55;cursor:progress}@media(max-width:720px){.book-grid{grid-template-columns:1fr}}

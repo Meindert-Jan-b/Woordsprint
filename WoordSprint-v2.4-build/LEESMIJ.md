@@ -1,3 +1,19 @@
+# WoordSprint 2.5 – privéboek Finish Up + snellere controle
+
+## Update van de bestaande Render-installatie (WoordSprint-v2.4-build)
+
+1. Maak zo nodig een back-up van de Supabase-gegevens. Verwijder geen bestaande tabellen.
+2. Voer in Supabase SQL Editor het nieuwe bestand `supabase/book-v25.sql` eenmalig uit. Dit maakt uitsluitend een extra, afgeschermde boekentabel.
+3. Upload de map `WoordSprint-v2.4-build` uit deze ZIP naar de **hoofdmap** van dezelfde GitHub-repository. Behoud de mapnaam omdat Render deze als Root Directory gebruikt. Overschrijf de oude bestanden. Neem geen oude data/accounts.json, .env of geheime sleutels mee.
+4. Commit changes, op de main branch. Kies vervolgens Render → Manual Deploy → Deploy latest commit. De bestaande Root Directory, build en start command en alle environment variables blijven ongewijzigd.
+5. Open de Render-website, druk Ctrl+F5 en controleer dat linksonder v2.5 staat. Log in op je huidige account.
+6. Open Finish Up in de zijbalk (op mobiel via Mijn woordenlijsten → Finish Up), klik op Boek toevoegen en selecteer het afzonderlijke bestand `Finish-Up-prive-boek.json`. Dit bestand bevat een privétranscriptie van de aangeleverde PDF: **niet naar GitHub uploaden of openbaar delen**. Je moet het recht hebben het boek voor eigen gebruik te gebruiken. Het boek is alleen zichtbaar voor jouw ingelogde account; de server bewaart het apart van de voortgang.
+7. Klik op het gewenste hoofdstuk. De eerste keer wordt de lijst in je bestaande account opgeslagen, de volgende keer wordt dezelfde lijst geopend. Bestaande handmatige/importlijsten worden niet automatisch samengevoegd of weggegooid. Je oude XP, coins en vinkjes blijven behouden.
+
+De nieuwe verwerking verkort de ingebouwde wachtpauze bij goede meerkeuze van 1.350 ms tot 220 ms (sprint 120 ms) en berekent alleen de voortgang van de actieve lijst na een antwoord. Supabase moet wijzigingen nog wel bevestigen; de netwerkvertraging blijft mogelijk. De vorige accounts.js-hotfix is meegenomen. De geëxtraheerde woorden en contextzinnen zijn niet allemaal handmatig nagekeken; bewerk onjuiste OCR-woorden in de lijst. CSE-theorie is geen woordenlijst en wordt niet als volledige tekst opgenomen. Cadeaubonnen met echte geldwaarde voorlopig uitgeschakeld laten: anti-botbescherming niet afdoende.
+
+## Eerdere installatiehandleiding
+
 # WoordSprint 2.4 ONLINE — Lijstbonus + Render + Supabase + WhatsApp + Vinkjes
 
 Deze versie is gebaseerd op WoordSprint 2.1. De bestaande leermodi, games, accounts, XP, coins, vrienden en cadeaubonaanvragen blijven behouden. **Je pc hoeft na publicatie niet meer aan te blijven.**

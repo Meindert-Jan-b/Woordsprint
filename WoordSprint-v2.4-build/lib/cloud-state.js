@@ -12,17 +12,24 @@ function createCloudStore(env=process.env, transport=globalThis.fetch){
   const headers={'apikey':secret,'Content-Type':'application/json'};
   // Current sb_secret_ keys belong only in apikey, not Authorization Bearer.
   // Legacy service_role is also accepted via apikey.
-  async function call(suffix,init={}){
+  async function call(suffix,init={},target=url){
     const controller=new AbortController();
     const timeout=setTimeout(()=>controller.abort(),15000);
     try{
-      const r=await transport(url+suffix,{...init,headers:{...headers,...init.headers},signal:controller.signal});
+      const r=await transport(target+suffix,{...init,headers:{...headers,...init.headers},signal:controller.signal});
       const body=await r.text();
       if(!r.ok)throw Error(`Supabase HTTP ${r.status}: ${body.slice(0,250)}`);
       return body?JSON.parse(body):null;
     }finally{clearTimeout(timeout);}
   }
   return {
+    async loadBook(uid){
+      const rows=await call('?user_id=eq.'+encodeURIComponent(uid)+'&select=payload',{method:'GET'},base+'/rest/v1/woordsprint_private_books');
+      if(!Array.isArray(rows))throw Error('Ongeldige boekopslag.');return rows[0]?.payload||null;
+    },
+    async saveBook(uid,book){
+      await call('?on_conflict=user_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({user_id:uid,payload:book})},base+'/rest/v1/woordsprint_private_books');
+    },
     async load(){
       const rows=await call('?id=eq.'+KEY+'&select=payload',{method:'GET'});
       if(!Array.isArray(rows))throw Error('Supabase gaf geen tabelgegevens terug.');
