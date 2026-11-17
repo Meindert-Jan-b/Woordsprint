@@ -175,7 +175,10 @@ class Accounts{
   }
   recordCorrect(u,list,word,correct,mode,direction,qualifies){
     const t=this.clock(),day=today(),key=canonicalKey(list,word);
-    const progress=(u.state.progress[list.id]||={});
+    // v2.4 hotfix: new/demo and legacy accounts may not yet have modeProgress.
+    // Initialize before every answer, even wrong answers and intermediate learning stages.
+    u.state.modeProgress ||= {};
+    const progress=((u.state.progress ||= {})[list.id]||={});
     const stat=progress[word.id]||={correct:0,wrong:0,streak:0,mastery:0,lastAt:null};
     const activity=u.state.activity.find(x=>x.date===day)||(()=>{const x={date:day,answered:0,correct:0,xp:0};u.state.activity.push(x);return x;})();
     activity.answered++;
@@ -192,7 +195,7 @@ class Accounts{
     activity.xp+=(earned.awardedXp||0);
     const badges=correct?this.updateBadges(u):[];
     u.state.activity=u.state.activity.slice(-120);this.persist();
-    return {...earned,stat,activity,modeProgress:u.state.modeProgress[list.id],profile:this.profile(u),badges:badges.map(b=>b.title)};
+    return {...earned,stat,activity,modeProgress:u.state.modeProgress[list.id]||{},profile:this.profile(u),badges:badges.map(b=>b.title)};
   }
   reviewAnswer(u,list,word,answer,mode,direction='forward',stage){
     const allowed=new Set(['choice','type','hint','test','dictation','context','learn','sprint','scramble']);
