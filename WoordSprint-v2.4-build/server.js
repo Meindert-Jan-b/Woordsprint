@@ -33,7 +33,12 @@ fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
 fs.mkdirSync(path.join(__dirname, '.ocr-cache'), { recursive: true });
 app.disable('x-powered-by');
 app.use(express.json({ limit: '3mb' }));
-app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'], maxAge: 0 }));
+const publicDirectory=path.join(__dirname,'public');
+// Slim leren and its caller must load together, including on cached or interrupted page loads.
+const browserApp=['learn-engine.js','app.js']
+  .map(file=>fs.readFileSync(path.join(publicDirectory,file),'utf8')).join('\n;\n');
+app.get('/app.js',(_req,res)=>res.type('application/javascript').set('Cache-Control','public, max-age=0').send(browserApp));
+app.use(express.static(publicDirectory, { extensions: ['html'], maxAge: 0 }));
 
 const id = () => crypto.randomUUID();
 const now = () => new Date().toISOString();
