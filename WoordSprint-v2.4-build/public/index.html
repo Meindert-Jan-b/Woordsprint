@@ -3,41 +3,38 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#10162c">
+  <meta name="theme-color" content="#f5f7f9">
   <meta name="description" content="WoordSprint: leer woordjes met slimme oefenstanden, spelletjes en foto's vanaf je telefoon.">
-  <title>WoordSprint — woordjes leren, maar leuk</title>
+  <title>WoordSprint</title>
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/style.css?v=2.6.0">
+  <link rel="stylesheet" href="/style.css?v=2.6.1">
   <script src="/answer-utils.js?v=2.6.0" defer></script>
   <script src="/cloze-utils.js?v=2.6.0" defer></script>
   <script src="/learn-engine.js?v=2.6.0" defer></script>
   <script src="/context-examples.js?v=2.6.0" defer></script>
-  <script src="/app.js?v=2.6.0" defer></script>
+  <script src="/app.js?v=2.6.1" defer></script>
 </head>
 <body>
   <div id="shell">
     <aside class="sidebar">
-      <a class="brand" href="#dashboard" aria-label="WoordSprint home"><span class="brand-icon">✦</span><span>Woord<span class="brand-pop">Sprint</span><small>LEER. SPEEL. SCOOR.</small></span></a>
-      <div class="sidebar-label">MENU</div>
+      <a class="brand" href="#dashboard" aria-label="WoordSprint home"><span class="brand-icon" aria-hidden="true">W</span><span>WoordSprint</span></a>
       <nav id="side-nav" aria-label="Hoofdnavigatie">
         <a href="#dashboard" data-nav="dashboard"><span class="nav-icon">◫</span> Dashboard</a>
         <a href="#lists" data-nav="lists"><span class="nav-icon">▤</span> Mijn woordenlijsten</a>
-        <a href="#book" data-nav="book"><span class="nav-icon">📘</span> Finish Up</a>
+        <a href="#book" data-nav="book"><span class="nav-icon">▣</span> Finish Up</a>
         <a href="#games" data-nav="games"><span class="nav-icon">♜</span> Spelletjes</a>
         <a href="#scan" data-nav="scan"><span class="nav-icon">▧</span> Woordjes scannen</a>
         <a href="#studygo" data-nav="studygo"><span class="nav-icon">↧</span> StudyGo importeren</a>
         <a href="#stats" data-nav="stats"><span class="nav-icon">▥</span> Statistieken</a>
-        <a href="#friends" data-nav="friends"><span class="nav-icon">👥</span> Vrienden</a>
-        <a href="#leaderboard" data-nav="leaderboard"><span class="nav-icon">🏆</span> Klassement</a>
+        <a href="#friends" data-nav="friends"><span class="nav-icon">♧</span> Vrienden</a>
+        <a href="#leaderboard" data-nav="leaderboard"><span class="nav-icon">▥</span> Klassement</a>
         <a href="#profile" data-nav="profile"><span class="nav-icon">◉</span> Mijn profiel</a>
       </nav>
-      <div class="sidebar-bottom"><div class="mini-orb">✦</div><strong>Elke dag een beetje beter.</strong><p>Oefen 10 minuten en bouw je streak op.</p><a class="plain-link" href="#lists">Begin met leren ↗</a></div>
-      <div class="sidebar-foot">Gemaakt om te leren · v2.6</div>
     </aside>
     <div class="workspace">
       <header class="topbar">
-        <div class="topbar-left"><span class="mobile-logo">✦ WoordSprint</span><span id="breadcrumb">Jouw leeromgeving</span></div>
-        <div class="topbar-right"><div class="top-xp"><span>⚡</span><span id="top-xp">0 XP</span></div><span class="top-xp coin-counter">🪙 <span id="top-coins">0 coins</span></span><a href="#profile" class="avatar" id="top-avatar" title="Mijn profiel">W</a></div>
+        <div class="topbar-left"><span class="mobile-logo">WoordSprint</span><span id="breadcrumb">Jouw leeromgeving</span></div>
+        <div class="topbar-right"><div class="top-xp"><span id="top-xp">0 XP</span></div><span class="top-xp coin-counter"><span id="top-coins">0 coins</span></span><a href="#profile" class="avatar" id="top-avatar" title="Mijn profiel">W</a></div>
       </header>
       <main id="app" tabindex="-1"><div class="loading-screen">Je leeromgeving wordt geopend…</div></main>
     </div>
