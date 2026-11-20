@@ -136,3 +136,73 @@
 
 /* v2.5 private book catalogue */
 .book-search{margin:20px 0 8px}.book-search .search-input{width:100%;max-width:540px}.book-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.book-row{display:flex;align-items:center;padding:14px;gap:13px;cursor:pointer;text-align:left;color:inherit;width:100%;font:inherit}.book-row:hover{border-color:#7762e9}.book-number{flex:0 0 42px;height:42px;display:grid;place-items:center;background:#eeeaff;border-radius:12px;font-weight:800;color:#6c55e3}.book-copy{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}.book-copy small{color:#7c8196}.book-arrow{color:#7762e9;font-weight:700}.checking-answer{opacity:.72;cursor:progress!important}.book-row:disabled{opacity:.55;cursor:progress}@media(max-width:720px){.book-grid{grid-template-columns:1fr}}
+
+/* Shared interface */
+:root {
+  --bg: #f5f7f9;
+  --ink: #162230;
+  --ink2: #465567;
+  --soft: #59697a;
+  --purple: #1d5767;
+  --purple2: #286e7f;
+  --violet-light: #e9f2f4;
+  --line: #dce3e9;
+  --shadow: none;
+}
+
+body, h1, h2, h3, h4 { font-family: 'DM Sans', system-ui, sans-serif; }
+h1 { letter-spacing: -.035em; }
+h2 { font-size: 21px; letter-spacing: -.025em; }
+.sidebar { background: var(--paper); color: var(--ink); border-right: 1px solid var(--line); overflow-y: auto; }
+.brand { font: 750 21px 'DM Sans', system-ui, sans-serif; padding-bottom: 24px; }
+.brand-icon, .auth-mark { background: var(--purple); color: white; box-shadow: none; border-radius: 8px; font-weight: 750; }
+.brand-icon { width: 34px; height: 34px; font-size: 19px; }
+#side-nav { gap: 4px; }
+#side-nav a { height: 42px; border-radius: 7px; color: var(--ink2); }
+#side-nav .nav-icon { color: inherit; font-size: 17px; }
+#side-nav a:hover, #side-nav a.active { background: var(--violet-light); color: var(--purple); }
+#side-nav a.active { box-shadow: inset 3px 0 var(--purple); }
+.topbar { height: 64px; background: var(--paper); backdrop-filter: none; }
+.top-xp, .top-xp span:first-child, .avatar { color: var(--purple); }
+.top-xp { padding: 6px 9px; background: var(--bg); border-color: var(--line); border-radius: 6px; }
+.avatar, .tag { background: var(--violet-light); color: var(--purple); }
+
+.card, .btn, .input, .textarea, select, .list-tab { border-radius: 8px; }
+.card, .list-simple, .auth-pane { box-shadow: none; }
+.btn { font-weight: 700; }
+.btn:hover:not(:disabled), .list-card:hover { transform: none; box-shadow: none; }
+.btn:hover:not(:disabled) { filter: brightness(.95); }
+a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 2px solid var(--purple);
+  outline-offset: 3px;
+}
+.eyebrow { color: var(--ink2); letter-spacing: .07em; }
+.list-simple-title, .list-directory-top strong { color: var(--ink); }
+.list-simple-sub, .list-simple-pct { color: var(--soft); }
+.list-tab.active, .list-tab:hover { background: var(--violet-light); color: var(--purple); }
+.meter i, .activity-bar.filled { background: var(--purple); }
+.scan-drop, .scan-callout, .scan-diagnostics, .studygo-intro {
+  background: var(--bg);
+  border-color: var(--line);
+  color: var(--ink2);
+}
+.scanner-hero, .scanner-hero h2, .scanner-hero .muted { background: var(--paper); color: var(--ink); }
+.auth-page { background: var(--bg); }
+.auth-pane { border-color: var(--line); border-radius: 12px; }
+.auth-mark { display: grid; place-items: center; width: 42px; height: 42px; font-size: 23px; }
+.auth-tabs { background: var(--bg); }
+.auth-tabs button { color: var(--ink2); }
+.auth-tabs button.on { color: var(--purple); box-shadow: 0 1px 3px #16223019; }
+
+.dashboard-heading { align-items: flex-end; }
+.dashboard-actions { flex-wrap: wrap; }
+.kpi-card .value { font: 750 26px 'DM Sans', system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+.dashboard-activity { margin-top: 28px; }
+.account-list { list-style: none; padding: 0; margin: 12px 0 0; }
+.account-list li { border-top: 1px solid var(--line); padding: 10px 0; overflow-wrap: anywhere; }
+
+@media (max-width: 680px) {
+  .dashboard-heading { align-items: flex-start; flex-direction: column; gap: 14px; }
+  .kpi-card { padding: 14px; }
+  .mobile-nav a.active { color: var(--purple); background: var(--violet-light); }
+}
