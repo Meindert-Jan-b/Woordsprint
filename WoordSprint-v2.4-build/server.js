@@ -179,6 +179,83 @@ app.get('/api/book',async(req,res)=>{try{const user=scope.getStore().user;const 
 app.post('/api/book/import',async(req,res)=>{const user=scope.getStore().user;try{accounts.ownerCheck(user);}catch(e){return error(res,403,e.message);}try{const book=await sharedLibrary.publish(user,req.body);res.json({book:bookIndex(book,user.state.lists)});}catch(e){console.error('Book publish:',e.message);error(res,400,e.message);}});
 app.post('/api/book/chapter/:id',async(req,res)=>{try{const user=scope.getStore().user;const book=await sharedLibrary.load();const result=openChapter(book,req.params.id,user.state.lists);if(result.created)save();res.json(result);}catch(e){console.error('Chapter open:',e.message);error(res,400,'Hoofdstuk kon niet worden geopend. Controleer of de beheerder het boek heeft gepubliceerd.');}});
 
+function classes() {
+  return accounts.data.classes ??= [];
+}
+
+function classIndex() {
+  return classes().map(({id,name,lists}) => ({
+    id,name,
+    lists:lists.map(({id,name,subject,words}) => ({id,name,subject,wordCount:words.length}))
+  }));
+}
+
+function requireOwner(req,res,next) {
+  try { accounts.ownerCheck(scope.getStore().user); }
+  catch (err) { return error(res,403,err.message); }
+  next();
+}
+
+app.get('/api/classes',(_req,res) => res.json(classIndex()));
+
+app.post('/api/classes',requireOwner,(req,res) => {
+  const name=text(req.body.name,80);
+  if(!name) return error(res,400,'Vul een klasnaam in.');
+  const existing=classes().find(entry=>entry.name.toLocaleLowerCase('nl')===name.toLocaleLowerCase('nl'));
+  if(existing) {
+    save();
+    return res.json({id:existing.id,classes:classIndex()});
+  }
+  const entry={id:id(),name,lists:[]};
+  classes().push(entry);
+  save();
+  res.status(201).json({id:entry.id,classes:classIndex()});
+});
+
+app.post('/api/classes/:classId/lists',requireOwner,(req,res) => {
+  const entry=classes().find(item=>item.id===req.params.classId);
+  const source=db.lists.find(list=>list.id===req.body.listId);
+  if(!entry || !source) return error(res,404,'Klas of woordenlijst niet gevonden.');
+  const existing=entry.lists.find(list=>list.sourceId===source.id);
+  const snapshot={
+    id:existing?.id||id(),sourceId:source.id,name:source.name,subject:source.subject,
+    fromLang:source.fromLang,toLang:source.toLang,words:structuredClone(source.words)
+  };
+  if(existing) Object.assign(existing,snapshot);
+  else entry.lists.push(snapshot);
+  save();
+  res.json(classIndex());
+});
+
+app.post('/api/classes/:classId/lists/:listId/open',(req,res) => {
+  const entry=classes().find(item=>item.id===req.params.classId);
+  const published=entry?.lists.find(list=>list.id===req.params.listId);
+  if(!published) return error(res,404,'Klaslijst niet gevonden.');
+  const wordKey=word=>JSON.stringify([word.front.toLocaleLowerCase('nl'),word.back.toLocaleLowerCase('nl')]);
+  const publishedKeys=published.words.map(wordKey);
+  let list=db.lists.find(item=>item.classListId===published.id);
+  if(!list) {
+    const stamp=now();
+    list={
+      id:id(),classListId:published.id,source:'class',createdAt:stamp,updatedAt:stamp,
+      name:published.name,subject:published.subject,fromLang:published.fromLang,toLang:published.toLang,
+      classWordKeys:publishedKeys,words:published.words.map(word=>({...word,id:id()}))
+    };
+    db.lists.unshift(list);
+  }else{
+    const seen=new Set(list.classWordKeys||list.words.map(wordKey));
+    const present=new Set(list.words.map(wordKey));
+    const additions=published.words.filter(word=>!seen.has(wordKey(word))&&!present.has(wordKey(word)));
+    if(additions.length){
+      list.words.push(...additions.map(word=>({...word,id:id()})));
+      list.updatedAt=now();
+    }
+    list.classWordKeys=[...new Set([...seen,...publishedKeys])];
+  }
+  save();
+  res.json({id:list.id});
+});
+
 // Handmatig claimen voor lijsten die in v2.3 al vóór de update waren voltooid.
 app.post('/api/lists/:id/bonus/claim',(req,res)=>{
  const user=scope.getStore().user,list=user.state.lists.find(l=>l.id===req.params.id);
