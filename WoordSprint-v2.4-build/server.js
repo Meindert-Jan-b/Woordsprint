@@ -8,6 +8,7 @@ const {AsyncLocalStorage} = require('node:async_hooks');
 const {Accounts,GIFT_CARDS} = require('./lib/accounts');
 const {createCloudStore,createWriteQueue}=require('./lib/cloud-state');
 const {validateBook,bookIndex,openChapter,localBookStore,sharedBookLibrary}=require('./lib/private-book');
+const germanClassBook=require('./lib/german-class-book.json');
 const {config:whatsappConfig,sendOwnerMessage}=require('./lib/whatsapp');
 const multer = require('multer');
 const QRCode = require('qrcode');
@@ -266,6 +267,26 @@ app.post('/api/classes',requireOwner,(req,res) => {
   res.status(201).json({id:entry.id,classes:classIndex()});
 });
 
+function classBookLists(book,bookId,idsByChapter=new Map()){
+  return book.chapters.map(chapter=>({
+    id:idsByChapter.get(chapter.id)||id(),name:chapter.title,
+    subject:book.subject,fromLang:book.fromLang,toLang:book.toLang,words:chapter.words,
+    book:{id:bookId,title:book.title,chapterId:chapter.id,number:chapter.number,page:chapter.page,section:chapter.section}
+  }));
+}
+
+function addGermanClassBook(){
+  const bookId='duits-hoofdstuk-1-6';
+  const name='1MA Duits';
+  let entry=classes().find(item=>item.name.toLocaleLowerCase('nl')===name.toLocaleLowerCase('nl'));
+  if(entry?.lists.some(list=>list.book?.id===bookId||list.book?.title===germanClassBook.title))return false;
+  const book={...validateBook(germanClassBook),subject:'Duits',fromLang:'de-DE',toLang:'nl-NL'};
+  const chapters=classBookLists(book,bookId);
+  if(entry)entry.lists.push(...chapters);
+  else classes().push({id:id(),name,lists:chapters});
+  return true;
+}
+
 app.post('/api/classes/:classId/books',requireOwner,(req,res)=>{
   const entry=classes().find(item=>item.id===req.params.classId);
   if(!entry) return error(res,404,'Klas niet gevonden.');
@@ -274,11 +295,7 @@ app.post('/api/classes/:classId/books',requireOwner,(req,res)=>{
     const previous=entry.lists.filter(list=>list.book?.title.toLocaleLowerCase('nl')===book.title.toLocaleLowerCase('nl'));
     const bookId=previous[0]?.book.id||id();
     const idsByChapter=new Map(previous.map(list=>[list.book.chapterId,list.id]));
-    const chapters=book.chapters.map(chapter=>({
-      id:idsByChapter.get(chapter.id)||id(),name:chapter.title,
-      subject:book.subject,fromLang:book.fromLang,toLang:book.toLang,words:chapter.words,
-      book:{id:bookId,title:book.title,chapterId:chapter.id,number:chapter.number,page:chapter.page,section:chapter.section}
-    }));
+    const chapters=classBookLists(book,bookId,idsByChapter);
     entry.lists=entry.lists.filter(list=>list.book?.id!==bookId).concat(chapters);
     save();
     res.json(classIndex());
@@ -642,6 +659,7 @@ async function bootstrap(){
     cloudQueue=createWriteQueue(cloudStore);
     accounts.persist=()=>cloudQueue.enqueue(accounts.data);
   }
+  if(addGermanClassBook())await accounts.persist();
   return {cloud:CLOUD_MODE,accounts};
 }
 if(require.main===module) {
