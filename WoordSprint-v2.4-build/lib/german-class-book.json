@@ -1,0 +1,1550 @@
+{
+  "format": "woordsprint-book-v1",
+  "title": "Duits · Hoofdstuk 1–6",
+  "chapters": [
+    {
+      "id": "hf-1-1",
+      "title": "1.1 Naam- en adresgegevens, beroep",
+      "section": "Hoofdstuk 1 · Persoonlijke gegevens",
+      "page": 8,
+      "words": [
+        {
+          "front": "der Name",
+          "back": "de naam"
+        },
+        {
+          "front": "der Vorname",
+          "back": "de voornaam"
+        },
+        {
+          "front": "der Familienname",
+          "back": "de achternaam"
+        },
+        {
+          "front": "heißen",
+          "back": "heten"
+        },
+        {
+          "front": "mit",
+          "back": "met"
+        },
+        {
+          "front": "Herr",
+          "back": "meneer"
+        },
+        {
+          "front": "Frau",
+          "back": "mevrouw"
+        },
+        {
+          "front": "die Adresse",
+          "back": "het adres"
+        },
+        {
+          "front": "wohnen",
+          "back": "wonen"
+        },
+        {
+          "front": "die Straße",
+          "back": "de straat"
+        },
+        {
+          "front": "die Nummer",
+          "back": "het nummer"
+        },
+        {
+          "front": "die Hausnummer",
+          "back": "het huisnummer"
+        },
+        {
+          "front": "die Stadt",
+          "back": "de stad"
+        },
+        {
+          "front": "meine Adresse ist",
+          "back": "mijn adres is"
+        },
+        {
+          "front": "zu Hause",
+          "back": "thuis"
+        },
+        {
+          "front": "die Niederlande",
+          "back": "Nederland"
+        },
+        {
+          "front": "Deutschland",
+          "back": "Duitsland"
+        },
+        {
+          "front": "Österreich",
+          "back": "Oostenrijk"
+        },
+        {
+          "front": "die Schweiz",
+          "back": "Zwitserland"
+        },
+        {
+          "front": "Liechtenstein",
+          "back": "Liechtenstein"
+        },
+        {
+          "front": "das Telefon",
+          "back": "de telefoon"
+        },
+        {
+          "front": "telefonieren",
+          "back": "telefoneren"
+        },
+        {
+          "front": "die Telefonnummer",
+          "back": "het telefoonnummer"
+        },
+        {
+          "front": "das Fax",
+          "back": "de fax"
+        },
+        {
+          "front": "schicken",
+          "back": "sturen"
+        },
+        {
+          "front": "die E-Mail",
+          "back": "de e-mail"
+        },
+        {
+          "front": "die E-Mail-Adresse",
+          "back": "het e-mailadres"
+        },
+        {
+          "front": "geboren",
+          "back": "geboren"
+        },
+        {
+          "front": "geboren am",
+          "back": "geboren op"
+        },
+        {
+          "front": "geboren in",
+          "back": "geboren in"
+        },
+        {
+          "front": "alt",
+          "back": "oud"
+        },
+        {
+          "front": "Jahre alt",
+          "back": "jaar oud"
+        },
+        {
+          "front": "vierzehn",
+          "back": "veertien"
+        },
+        {
+          "front": "der Monat",
+          "back": "de maand"
+        },
+        {
+          "front": "klein",
+          "back": "klein"
+        },
+        {
+          "front": "jung",
+          "back": "jong"
+        },
+        {
+          "front": "der Mann",
+          "back": "de man"
+        },
+        {
+          "front": "der Herr",
+          "back": "de heer"
+        },
+        {
+          "front": "der Junge",
+          "back": "de jongen"
+        },
+        {
+          "front": "die Frau",
+          "back": "de vrouw"
+        },
+        {
+          "front": "das Mädchen",
+          "back": "het meisje"
+        },
+        {
+          "front": "der Freund",
+          "back": "de vriend"
+        },
+        {
+          "front": "die Freundin",
+          "back": "de vriendin"
+        }
+      ]
+    },
+    {
+      "id": "hf-1-2",
+      "title": "1.2 Nadere informatie over personen",
+      "section": "Hoofdstuk 1 · Persoonlijke gegevens",
+      "page": 10,
+      "words": [
+        {
+          "front": "verheiratet",
+          "back": "getrouwd"
+        },
+        {
+          "front": "die Familie",
+          "back": "de familie / het gezin"
+        },
+        {
+          "front": "das Kind",
+          "back": "het kind"
+        },
+        {
+          "front": "der Deutsche",
+          "back": "de Duitser"
+        },
+        {
+          "front": "die Deutsche",
+          "back": "de Duitse"
+        },
+        {
+          "front": "Deutsch",
+          "back": "Duits (de taal)"
+        },
+        {
+          "front": "der Österreicher",
+          "back": "de Oostenrijker"
+        },
+        {
+          "front": "die Österreicherin",
+          "back": "de Oostenrijkse"
+        },
+        {
+          "front": "österreichisch",
+          "back": "Oostenrijks"
+        },
+        {
+          "front": "der Schweizer",
+          "back": "de Zwitser"
+        },
+        {
+          "front": "die Schweizerin",
+          "back": "de Zwitserse"
+        },
+        {
+          "front": "schweizerisch",
+          "back": "Zwitsers"
+        },
+        {
+          "front": "der Niederländer",
+          "back": "de Nederlander"
+        },
+        {
+          "front": "die Niederländerin",
+          "back": "de Nederlandse"
+        },
+        {
+          "front": "kommen aus",
+          "back": "komen uit"
+        },
+        {
+          "front": "wo her",
+          "back": "waar vandaan"
+        },
+        {
+          "front": "woher",
+          "back": "waarvandaan"
+        },
+        {
+          "front": "von wo",
+          "back": "van waar / waarvandaan"
+        },
+        {
+          "front": "machen",
+          "back": "doen"
+        },
+        {
+          "front": "verkaufen",
+          "back": "verkopen"
+        },
+        {
+          "front": "die Eltern",
+          "back": "de ouders"
+        },
+        {
+          "front": "der Vater",
+          "back": "de vader"
+        },
+        {
+          "front": "die Mutter",
+          "back": "de moeder"
+        },
+        {
+          "front": "die Großmutter",
+          "back": "de grootmoeder / de oma"
+        },
+        {
+          "front": "der Großvater",
+          "back": "de grootvader / de opa"
+        },
+        {
+          "front": "von",
+          "back": "van"
+        },
+        {
+          "front": "mögen",
+          "back": "houden van / lusten"
+        },
+        {
+          "front": "lieben",
+          "back": "erg houden van / erg lusten"
+        },
+        {
+          "front": "gefallen",
+          "back": "bevallen"
+        },
+        {
+          "front": "nicht gefallen",
+          "back": "niet bevallen"
+        },
+        {
+          "front": "gern",
+          "back": "graag"
+        },
+        {
+          "front": "nicht gern",
+          "back": "niet graag"
+        },
+        {
+          "front": "das Hobby",
+          "back": "de hobby"
+        },
+        {
+          "front": "wie",
+          "back": "hoe"
+        },
+        {
+          "front": "nett",
+          "back": "aardig"
+        },
+        {
+          "front": "dumm",
+          "back": "dom"
+        },
+        {
+          "front": "blöd",
+          "back": "dom / stom"
+        },
+        {
+          "front": "traurig",
+          "back": "treurig / bedroefd"
+        },
+        {
+          "front": "groß",
+          "back": "groot / lang"
+        },
+        {
+          "front": "klein",
+          "back": "klein"
+        },
+        {
+          "front": "schön",
+          "back": "mooi"
+        },
+        {
+          "front": "das Auge",
+          "back": "het oog"
+        },
+        {
+          "front": "schwarz",
+          "back": "zwart"
+        },
+        {
+          "front": "braun",
+          "back": "bruin"
+        },
+        {
+          "front": "rot",
+          "back": "rood"
+        },
+        {
+          "front": "zwanzig",
+          "back": "twintig"
+        },
+        {
+          "front": "hundertdreißig",
+          "back": "130"
+        },
+        {
+          "front": "Mittwoch",
+          "back": "woensdag"
+        },
+        {
+          "front": "sechs",
+          "back": "zes"
+        },
+        {
+          "front": "achte",
+          "back": "achtste"
+        }
+      ]
+    },
+    {
+      "id": "hf-2-1",
+      "title": "2.1 Huis en inrichting",
+      "section": "Hoofdstuk 2 · Wonen",
+      "page": 14,
+      "words": [
+        {
+          "front": "wohnen",
+          "back": "wonen"
+        },
+        {
+          "front": "zu Hause",
+          "back": "thuis"
+        },
+        {
+          "front": "das Haus",
+          "back": "het huis"
+        },
+        {
+          "front": "die Wohnung",
+          "back": "de woning / de flat"
+        },
+        {
+          "front": "das Zimmer",
+          "back": "de kamer"
+        },
+        {
+          "front": "kaufen",
+          "back": "kopen"
+        },
+        {
+          "front": "verkaufen",
+          "back": "verkopen"
+        },
+        {
+          "front": "das Schlafzimmer",
+          "back": "de slaapkamer"
+        },
+        {
+          "front": "das Kinderzimmer",
+          "back": "de kinderkamer"
+        },
+        {
+          "front": "die Küche",
+          "back": "de keuken"
+        },
+        {
+          "front": "das Badezimmer",
+          "back": "de badkamer"
+        },
+        {
+          "front": "die Toilette",
+          "back": "het toilet"
+        },
+        {
+          "front": "die Tür",
+          "back": "de deur"
+        },
+        {
+          "front": "das Fenster",
+          "back": "het raam / het venster"
+        },
+        {
+          "front": "der Garten",
+          "back": "de tuin"
+        },
+        {
+          "front": "der Tisch",
+          "back": "de tafel"
+        },
+        {
+          "front": "der Stuhl",
+          "back": "de stoel"
+        },
+        {
+          "front": "der Teppich",
+          "back": "het tapijt"
+        },
+        {
+          "front": "der Schrank",
+          "back": "de kast"
+        },
+        {
+          "front": "das Bett",
+          "back": "het bed"
+        },
+        {
+          "front": "der Herd",
+          "back": "het fornuis"
+        },
+        {
+          "front": "der Kühlschrank",
+          "back": "de koelkast"
+        },
+        {
+          "front": "die Dusche",
+          "back": "de douche"
+        },
+        {
+          "front": "der Spiegel",
+          "back": "de spiegel"
+        },
+        {
+          "front": "die Uhr",
+          "back": "de klok / het horloge"
+        }
+      ]
+    },
+    {
+      "id": "hf-2-2",
+      "title": "2.2 Comfort",
+      "section": "Hoofdstuk 2 · Wonen",
+      "page": 15,
+      "words": [
+        {
+          "front": "das Wasser",
+          "back": "het water"
+        },
+        {
+          "front": "warm",
+          "back": "warm"
+        },
+        {
+          "front": "kalt",
+          "back": "koud"
+        },
+        {
+          "front": "das Licht",
+          "back": "het licht"
+        },
+        {
+          "front": "drücken",
+          "back": "drukken / duwen"
+        },
+        {
+          "front": "das Telefon",
+          "back": "de telefoon"
+        },
+        {
+          "front": "der Computer",
+          "back": "de computer"
+        },
+        {
+          "front": "das Radio",
+          "back": "de radio"
+        },
+        {
+          "front": "anmachen",
+          "back": "aanzetten"
+        },
+        {
+          "front": "an",
+          "back": "aan"
+        },
+        {
+          "front": "ausmachen",
+          "back": "uitzetten"
+        },
+        {
+          "front": "aus",
+          "back": "uit"
+        },
+        {
+          "front": "kochen",
+          "back": "koken"
+        },
+        {
+          "front": "waschen",
+          "back": "wassen"
+        },
+        {
+          "front": "der Abfall",
+          "back": "het afval"
+        },
+        {
+          "front": "die Haustür",
+          "back": "de huisdeur"
+        },
+        {
+          "front": "der Schlüssel",
+          "back": "de sleutel"
+        },
+        {
+          "front": "aufmachen",
+          "back": "opendoen"
+        },
+        {
+          "front": "auf",
+          "back": "open"
+        },
+        {
+          "front": "offen",
+          "back": "open"
+        },
+        {
+          "front": "zumachen",
+          "back": "dichtdoen"
+        },
+        {
+          "front": "zu",
+          "back": "dicht"
+        },
+        {
+          "front": "geschlossen",
+          "back": "gesloten"
+        },
+        {
+          "front": "kosten",
+          "back": "kosten"
+        },
+        {
+          "front": "mit",
+          "back": "met / inclusief"
+        },
+        {
+          "front": "ohne",
+          "back": "zonder / exclusief"
+        },
+        {
+          "front": "groß",
+          "back": "groot"
+        },
+        {
+          "front": "klein",
+          "back": "klein"
+        },
+        {
+          "front": "hell",
+          "back": "licht"
+        },
+        {
+          "front": "teuer",
+          "back": "duur"
+        },
+        {
+          "front": "alt",
+          "back": "oud"
+        },
+        {
+          "front": "neu",
+          "back": "nieuw"
+        },
+        {
+          "front": "schön",
+          "back": "mooi"
+        },
+        {
+          "front": "nett",
+          "back": "aardig"
+        },
+        {
+          "front": "sauber",
+          "back": "schoon"
+        },
+        {
+          "front": "schmutzig",
+          "back": "smerig / vuil"
+        },
+        {
+          "front": "liegen",
+          "back": "liggen"
+        },
+        {
+          "front": "leise",
+          "back": "zacht / zachtjes"
+        },
+        {
+          "front": "laut",
+          "back": "luid / lawaaiig"
+        }
+      ]
+    },
+    {
+      "id": "hf-3",
+      "title": "Omgeving en natuur",
+      "section": "Hoofdstuk 3 · Omgeving en natuur",
+      "page": 18,
+      "words": [
+        {
+          "front": "das Meer",
+          "back": "de zee"
+        },
+        {
+          "front": "die Stadt",
+          "back": "de stad"
+        },
+        {
+          "front": "der Park",
+          "back": "het park"
+        },
+        {
+          "front": "der Wald",
+          "back": "het bos"
+        },
+        {
+          "front": "der Berg",
+          "back": "de berg"
+        },
+        {
+          "front": "grün",
+          "back": "groen"
+        },
+        {
+          "front": "der See",
+          "back": "het meer"
+        },
+        {
+          "front": "die Natur",
+          "back": "de natuur"
+        },
+        {
+          "front": "die Pflanze",
+          "back": "de plant"
+        },
+        {
+          "front": "die Blume",
+          "back": "de bloem"
+        },
+        {
+          "front": "der Baum",
+          "back": "de boom"
+        },
+        {
+          "front": "das Tier",
+          "back": "het dier"
+        },
+        {
+          "front": "der Vogel",
+          "back": "de vogel"
+        },
+        {
+          "front": "der Fisch",
+          "back": "de vis"
+        },
+        {
+          "front": "die Sonne",
+          "back": "de zon"
+        },
+        {
+          "front": "heiß",
+          "back": "heet"
+        },
+        {
+          "front": "warm",
+          "back": "warm"
+        },
+        {
+          "front": "schön",
+          "back": "mooi"
+        },
+        {
+          "front": "gut",
+          "back": "goed"
+        },
+        {
+          "front": "kalt",
+          "back": "koud"
+        },
+        {
+          "front": "schlecht",
+          "back": "slecht"
+        },
+        {
+          "front": "der Regen",
+          "back": "de regen"
+        },
+        {
+          "front": "regnen",
+          "back": "regenen"
+        },
+        {
+          "front": "es gibt",
+          "back": "er is"
+        }
+      ]
+    },
+    {
+      "id": "hf-4-1",
+      "title": "4.1 De weg vinden",
+      "section": "Hoofdstuk 4 · Reizen en verkeer",
+      "page": 20,
+      "words": [
+        {
+          "front": "die Karte",
+          "back": "de kaart"
+        },
+        {
+          "front": "die Landkarte",
+          "back": "de landkaart"
+        },
+        {
+          "front": "ich bin nicht von hier",
+          "back": "ik ben niet van hier"
+        },
+        {
+          "front": "fragen",
+          "back": "vragen"
+        },
+        {
+          "front": "suchen",
+          "back": "zoeken"
+        },
+        {
+          "front": "kommen",
+          "back": "komen"
+        },
+        {
+          "front": "gehen",
+          "back": "gaan"
+        },
+        {
+          "front": "zu",
+          "back": "naar"
+        },
+        {
+          "front": "nach",
+          "back": "naar (plaatsnaam)"
+        },
+        {
+          "front": "wo",
+          "back": "waar"
+        },
+        {
+          "front": "wohin",
+          "back": "waar naartoe"
+        },
+        {
+          "front": "wie weit",
+          "back": "hoe ver"
+        },
+        {
+          "front": "wie lange",
+          "back": "hoe lang"
+        },
+        {
+          "front": "weit",
+          "back": "ver"
+        },
+        {
+          "front": "geradeaus",
+          "back": "rechtdoor"
+        },
+        {
+          "front": "links",
+          "back": "links"
+        },
+        {
+          "front": "rechts",
+          "back": "rechts"
+        },
+        {
+          "front": "falsch",
+          "back": "fout / verkeerd"
+        },
+        {
+          "front": "ankommen",
+          "back": "aankomen"
+        },
+        {
+          "front": "da sein",
+          "back": "er zijn"
+        },
+        {
+          "front": "irgendwo sein",
+          "back": "(ergens) zijn"
+        }
+      ]
+    },
+    {
+      "id": "hf-4-2",
+      "title": "4.2 Vakantie",
+      "section": "Hoofdstuk 4 · Reizen en verkeer",
+      "page": 21,
+      "words": [
+        {
+          "front": "zu Hause",
+          "back": "thuis"
+        },
+        {
+          "front": "gehen nach",
+          "back": "gaan naar (landennaam)"
+        },
+        {
+          "front": "die Ferien",
+          "back": "de vakantie"
+        },
+        {
+          "front": "frei",
+          "back": "vrij"
+        },
+        {
+          "front": "wann",
+          "back": "wanneer"
+        },
+        {
+          "front": "die Reise",
+          "back": "de reis"
+        },
+        {
+          "front": "reisen",
+          "back": "reizen"
+        },
+        {
+          "front": "der Tourist",
+          "back": "de toerist"
+        },
+        {
+          "front": "die Touristin",
+          "back": "de toeriste"
+        },
+        {
+          "front": "sehen",
+          "back": "zien"
+        },
+        {
+          "front": "Gute Reise!",
+          "back": "Goede reis!"
+        },
+        {
+          "front": "der Bus",
+          "back": "de bus"
+        },
+        {
+          "front": "der Zug",
+          "back": "de trein"
+        },
+        {
+          "front": "die Bahn",
+          "back": "de trein"
+        },
+        {
+          "front": "das Taxi",
+          "back": "de taxi"
+        },
+        {
+          "front": "das Schiff",
+          "back": "het schip"
+        },
+        {
+          "front": "wo her",
+          "back": "waar vandaan"
+        },
+        {
+          "front": "woher",
+          "back": "waarvandaan"
+        },
+        {
+          "front": "bis",
+          "back": "tot"
+        },
+        {
+          "front": "die Fahrkarte",
+          "back": "het kaartje / het ticket"
+        },
+        {
+          "front": "hin und zurück",
+          "back": "retour(tje)"
+        },
+        {
+          "front": "einmal",
+          "back": "één keer"
+        },
+        {
+          "front": "zweimal",
+          "back": "twee keer"
+        },
+        {
+          "front": "der Koffer",
+          "back": "de koffer"
+        },
+        {
+          "front": "schicken",
+          "back": "sturen"
+        },
+        {
+          "front": "suchen",
+          "back": "zoeken"
+        },
+        {
+          "front": "schnell",
+          "back": "gauw / even / snel"
+        },
+        {
+          "front": "das Fahrrad",
+          "back": "de fiets"
+        },
+        {
+          "front": "das Motorrad",
+          "back": "de motorfiets"
+        },
+        {
+          "front": "das Auto",
+          "back": "de auto"
+        },
+        {
+          "front": "Auto fahren",
+          "back": "autorijden"
+        },
+        {
+          "front": "Stopp!",
+          "back": "Stop!"
+        },
+        {
+          "front": "die Straße",
+          "back": "de straat / de weg"
+        },
+        {
+          "front": "die Autobahn",
+          "back": "de autosnelweg"
+        },
+        {
+          "front": "die Kreuzung",
+          "back": "de kruising"
+        },
+        {
+          "front": "die Ampel",
+          "back": "het verkeerslicht"
+        },
+        {
+          "front": "die Polizei",
+          "back": "de politie"
+        },
+        {
+          "front": "rufen",
+          "back": "roepen"
+        },
+        {
+          "front": "schlafen",
+          "back": "slapen"
+        },
+        {
+          "front": "das Hotel",
+          "back": "het hotel"
+        },
+        {
+          "front": "die Nummer",
+          "back": "het nummer"
+        },
+        {
+          "front": "der Schlüssel",
+          "back": "de sleutel"
+        },
+        {
+          "front": "der Zimmerschlüssel",
+          "back": "de kamersleutel"
+        },
+        {
+          "front": "bezahlen",
+          "back": "betalen"
+        },
+        {
+          "front": "zahlen",
+          "back": "betalen"
+        },
+        {
+          "front": "das Zimmer",
+          "back": "de kamer"
+        },
+        {
+          "front": "mit Dusche",
+          "back": "met douche"
+        },
+        {
+          "front": "mit Bad",
+          "back": "met badkamer"
+        },
+        {
+          "front": "ohne Dusche",
+          "back": "zonder douche"
+        },
+        {
+          "front": "ohne Bad",
+          "back": "zonder badkamer"
+        },
+        {
+          "front": "mit Frühstück",
+          "back": "met ontbijt"
+        },
+        {
+          "front": "ohne Frühstück",
+          "back": "zonder ontbijt"
+        }
+      ]
+    },
+    {
+      "id": "hf-5-1",
+      "title": "5.1 Voeding",
+      "section": "Hoofdstuk 5 · Eten en drinken",
+      "page": 25,
+      "words": [
+        {
+          "front": "das Essen",
+          "back": "het eten"
+        },
+        {
+          "front": "Essen und Trinken",
+          "back": "eten en drinken"
+        },
+        {
+          "front": "essen",
+          "back": "eten"
+        },
+        {
+          "front": "trinken",
+          "back": "drinken"
+        },
+        {
+          "front": "der Hunger",
+          "back": "de honger"
+        },
+        {
+          "front": "der Durst",
+          "back": "de dorst"
+        },
+        {
+          "front": "mögen",
+          "back": "lusten / lekker vinden"
+        },
+        {
+          "front": "gern",
+          "back": "graag"
+        },
+        {
+          "front": "das Frühstück",
+          "back": "het ontbijt"
+        },
+        {
+          "front": "das Mittagessen",
+          "back": "het (warme) middageten"
+        },
+        {
+          "front": "das Abendessen",
+          "back": "het avondeten"
+        },
+        {
+          "front": "die Küche",
+          "back": "de keuken"
+        },
+        {
+          "front": "die Suppe",
+          "back": "de soep"
+        },
+        {
+          "front": "geben",
+          "back": "geven"
+        },
+        {
+          "front": "nehmen",
+          "back": "nemen"
+        },
+        {
+          "front": "Guten Appetit!",
+          "back": "Eet smakelijk!"
+        }
+      ]
+    },
+    {
+      "id": "hf-5-2",
+      "title": "5.2 Levensmiddelen",
+      "section": "Hoofdstuk 5 · Eten en drinken",
+      "page": 26,
+      "words": [
+        {
+          "front": "der Supermarkt",
+          "back": "de supermarkt"
+        },
+        {
+          "front": "das Gemüse",
+          "back": "de groente"
+        },
+        {
+          "front": "der Salat",
+          "back": "de sla"
+        },
+        {
+          "front": "die Kartoffeln",
+          "back": "de aardappels"
+        },
+        {
+          "front": "das Obst",
+          "back": "het fruit"
+        },
+        {
+          "front": "der Apfel",
+          "back": "de appel"
+        },
+        {
+          "front": "die Zitrone",
+          "back": "de citroen"
+        },
+        {
+          "front": "die Milch",
+          "back": "de melk"
+        },
+        {
+          "front": "die Butter",
+          "back": "de boter"
+        },
+        {
+          "front": "der Käse",
+          "back": "de kaas"
+        },
+        {
+          "front": "das Brot",
+          "back": "het brood / de boterham"
+        },
+        {
+          "front": "der Reis",
+          "back": "de rijst"
+        },
+        {
+          "front": "die Nudeln",
+          "back": "de pasta"
+        },
+        {
+          "front": "der Fisch",
+          "back": "de vis"
+        },
+        {
+          "front": "das Fleisch",
+          "back": "het vlees"
+        },
+        {
+          "front": "das Salz",
+          "back": "het zout"
+        },
+        {
+          "front": "der Pfeffer",
+          "back": "de peper"
+        },
+        {
+          "front": "der Zucker",
+          "back": "de suiker"
+        },
+        {
+          "front": "das Fruchteis",
+          "back": "het vruchtenijs"
+        },
+        {
+          "front": "etwas zu trinken",
+          "back": "iets te drinken"
+        },
+        {
+          "front": "das Wasser",
+          "back": "het water"
+        },
+        {
+          "front": "das Mineralwasser",
+          "back": "het mineraalwater"
+        },
+        {
+          "front": "der Orangensaft",
+          "back": "het sinaasappelsap"
+        },
+        {
+          "front": "das Eis",
+          "back": "het ijs"
+        },
+        {
+          "front": "das Glas",
+          "back": "het glas"
+        },
+        {
+          "front": "das Glas",
+          "back": "de (glazen) pot"
+        },
+        {
+          "front": "die Flasche",
+          "back": "de fles"
+        }
+      ]
+    },
+    {
+      "id": "hf-5-3",
+      "title": "5.3 Uit eten gaan",
+      "section": "Hoofdstuk 5 · Eten en drinken",
+      "page": 27,
+      "words": [
+        {
+          "front": "frei",
+          "back": "vrij"
+        },
+        {
+          "front": "die Speisekarte",
+          "back": "de menukaart"
+        },
+        {
+          "front": "bezahlen",
+          "back": "betalen"
+        },
+        {
+          "front": "das Restaurant",
+          "back": "het restaurant"
+        },
+        {
+          "front": "der Tisch",
+          "back": "de tafel"
+        },
+        {
+          "front": "der Stuhl",
+          "back": "de stoel"
+        },
+        {
+          "front": "Entschuldigen Sie bitte.",
+          "back": "Neemt u me niet kwalijk."
+        },
+        {
+          "front": "gut",
+          "back": "goed"
+        },
+        {
+          "front": "schlecht",
+          "back": "slecht"
+        },
+        {
+          "front": "kalt",
+          "back": "koud"
+        },
+        {
+          "front": "heiß",
+          "back": "heet"
+        },
+        {
+          "front": "warm",
+          "back": "warm"
+        },
+        {
+          "front": "fein",
+          "back": "fijn"
+        },
+        {
+          "front": "süß",
+          "back": "zoet"
+        },
+        {
+          "front": "kochen",
+          "back": "koken"
+        },
+        {
+          "front": "machen",
+          "back": "maken"
+        },
+        {
+          "front": "waschen",
+          "back": "wassen"
+        }
+      ]
+    },
+    {
+      "id": "hf-6-1",
+      "title": "6.1 Boodschappen doen",
+      "section": "Hoofdstuk 6 · Boodschappen",
+      "page": 29,
+      "words": [
+        {
+          "front": "zum Supermarkt",
+          "back": "naar de supermarkt"
+        },
+        {
+          "front": "kaufen",
+          "back": "kopen"
+        },
+        {
+          "front": "verkaufen",
+          "back": "verkopen"
+        },
+        {
+          "front": "möchte",
+          "back": "zou graag willen"
+        },
+        {
+          "front": "suchen",
+          "back": "zoeken"
+        },
+        {
+          "front": "nehmen",
+          "back": "nemen"
+        },
+        {
+          "front": "gibt es",
+          "back": "is er"
+        },
+        {
+          "front": "es gibt keinen",
+          "back": "er is geen (der-woord)"
+        },
+        {
+          "front": "es gibt keine",
+          "back": "er is geen (die-woord)"
+        },
+        {
+          "front": "es gibt kein",
+          "back": "er is geen (das-woord)"
+        },
+        {
+          "front": "es gibt keine",
+          "back": "er is geen (meervoud)"
+        },
+        {
+          "front": "etwas für",
+          "back": "iets voor"
+        },
+        {
+          "front": "etwas gegen",
+          "back": "iets tegen"
+        },
+        {
+          "front": "gefallen",
+          "back": "bevallen"
+        },
+        {
+          "front": "das Kilo",
+          "back": "de kilo"
+        },
+        {
+          "front": "bezahlen",
+          "back": "betalen"
+        },
+        {
+          "front": "zahlen",
+          "back": "betalen"
+        },
+        {
+          "front": "für",
+          "back": "voor"
+        },
+        {
+          "front": "teuer",
+          "back": "duur"
+        },
+        {
+          "front": "kostet nichts",
+          "back": "niets kosten"
+        },
+        {
+          "front": "das Geld",
+          "back": "het geld"
+        },
+        {
+          "front": "haben",
+          "back": "hebben"
+        },
+        {
+          "front": "der Euro",
+          "back": "de Euro"
+        }
+      ]
+    },
+    {
+      "id": "hf-6-2",
+      "title": "6.2 Artikelen",
+      "section": "Hoofdstuk 6 · Boodschappen",
+      "page": 30,
+      "words": [
+        {
+          "front": "der Teller",
+          "back": "het bord"
+        },
+        {
+          "front": "das Glas",
+          "back": "het glas"
+        },
+        {
+          "front": "die Flasche",
+          "back": "de fles"
+        },
+        {
+          "front": "das Messer",
+          "back": "het mes"
+        },
+        {
+          "front": "die Gabel",
+          "back": "de vork"
+        },
+        {
+          "front": "der Löffel",
+          "back": "de lepel"
+        },
+        {
+          "front": "die Hose",
+          "back": "de broek"
+        },
+        {
+          "front": "die Jeans",
+          "back": "de jeans / de spijkerbroek"
+        },
+        {
+          "front": "das T-Shirt",
+          "back": "het T-shirt"
+        },
+        {
+          "front": "das Hemd",
+          "back": "het overhemd"
+        },
+        {
+          "front": "der Pullover",
+          "back": "de trui"
+        },
+        {
+          "front": "die Jacke",
+          "back": "het jack / het jasje"
+        },
+        {
+          "front": "der Mantel",
+          "back": "de jas"
+        },
+        {
+          "front": "der Schuh",
+          "back": "de schoen"
+        },
+        {
+          "front": "die Nummer",
+          "back": "de maat / het maatnummer"
+        },
+        {
+          "front": "die Größe",
+          "back": "de maat"
+        },
+        {
+          "front": "gehen",
+          "back": "gaan"
+        },
+        {
+          "front": "die Uhr",
+          "back": "het horloge / de klok"
+        },
+        {
+          "front": "sauber",
+          "back": "schoon"
+        },
+        {
+          "front": "schmutzig",
+          "back": "vuil"
+        },
+        {
+          "front": "schön",
+          "back": "mooi"
+        },
+        {
+          "front": "nett",
+          "back": "leuk / aardig"
+        },
+        {
+          "front": "stark",
+          "back": "sterk"
+        },
+        {
+          "front": "das Feuer",
+          "back": "het vuur"
+        },
+        {
+          "front": "ausmachen",
+          "back": "uitdoen"
+        }
+      ]
+    }
+  ]
+}
