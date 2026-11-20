@@ -52,6 +52,16 @@ test('flashcards award same XP after a revealed, viewed card',()=>{
  a.revealSelf(u,gameId,'w');tick(1500);
  assert.equal(a.finishGamePair(u,l,gameId,'w','w',true).awardedXp,10);
 });
+test('registered usernames are available only to the owner',()=>{
+ const {a,dir}=make();
+ const owner=a.register('beheerder','password123');
+ const user=a.register('leerling','password123');
+ assert.throws(()=>a.ownerView(user),/Alleen de beheerder/);
+ const code=fs.readFileSync(path.join(dir,'BEHEERDER-CODE-PRIVE.txt'),'utf8').match(/[a-f0-9]{32}/)[0];
+ a.ownerClaim(owner,code);
+ assert.deepEqual(a.ownerView(owner).users,[{username:'beheerder'},{username:'leerling'}]);
+});
+
 test('owner-only gift-card request: reserve, reject refund, deliver; no automatic Robux trade',()=>{
  const {a,dir}=make(),owner=a.register('beheerder','password123'),user=a.register('leerling','password123');
  assert.throws(()=>a.ownerEnable(user,true),/Alleen de beheerder/);

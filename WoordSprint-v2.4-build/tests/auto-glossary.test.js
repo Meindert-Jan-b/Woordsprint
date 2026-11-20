@@ -40,3 +40,19 @@ test('auto detection still works with rotated and perspective-shifted geometry',
   assert.ok(got&&got.diagnostics.parallelRows>=20);
   assert.ok(got.boundary>950&&got.boundary<1200);
 });
+
+test('vindt een korte woordenlijst met wijde kolommen en voorbeeldzinnen',()=>{
+ const lines=['apple','pear','grape','plum'].flatMap((word,index)=>{
+   const y=120+index*48;
+   return [
+     {text:word,x:20,end:66,y,height:12},
+     {text:['appel','peer','druif','pruim'][index],x:700,end:750,y,height:12},
+     {text:'This is a complete example sentence.',x:140,end:420,y,height:12}
+   ];
+ });
+ const result=discoverGlossary(lines,900,1000);
+ assert.ok(result);
+ assert.ok(result.leftX<20);
+ assert.ok(result.boundary>650);
+ assert.equal(result.diagnostics.parallelRows,4);
+});

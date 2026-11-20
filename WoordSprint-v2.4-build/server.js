@@ -13,7 +13,7 @@ const multer = require('multer');
 const QRCode = require('qrcode');
 const sharp = require('sharp');
 const { createWorker } = require('tesseract.js');
-const {tsvLines,pairAligned,splitTsvColumns,cropFromPercents}=require('./lib/ocr-layout');
+const {tsvLines,glossaryLines,pairAligned,splitTsvColumns,cropFromPercents}=require('./lib/ocr-layout');
 const {discoverGlossary}=require('./lib/auto-glossary');
 const {detectKnownPage}=require('./lib/known-page');
 const {parsePastedText,fetchPublicStudyGo,parsePdfPages}=require('./lib/studygo-import');
@@ -104,9 +104,6 @@ app.use('/api',(req,res,next)=>{
 app.get('/api/profile',(req,res)=>res.json(accounts.profile(scope.getStore().user)));
 app.post('/api/profile/legacy',(req,res)=>{try{const n=accounts.claimLegacy(scope.getStore().user,req.body.code);res.json({ok:true,count:n});}catch(e){authError(res,e.message);}});
 app.post('/api/profile/privacy',(req,res)=>{const u=scope.getStore().user;u.privacy.showGlobal=req.body.showGlobal===true;save();res.json(accounts.profile(u));});
-app.get('/api/rewards',(req,res)=>{const u=scope.getStore().user;res.json({profile:accounts.profile(u),catalog:require('./lib/accounts').BADGES,shop:require('./lib/accounts').SHOP,quests:accounts.quests(u),audit:u.audit.slice(-35).reverse()});});
-app.post('/api/shop/buy',(req,res)=>{try{res.json(accounts.shopBuy(scope.getStore().user,req.body.itemId));}catch(e){authError(res,e.message);}});
-app.post('/api/shop/equip',(req,res)=>{try{res.json(accounts.equip(scope.getStore().user,req.body.itemId));}catch(e){authError(res,e.message);}});
 app.get('/api/friends',(req,res)=>res.json(accounts.friendsView(scope.getStore().user)));
 app.get('/api/friends/search',(req,res)=>{const u=scope.getStore().user;const q=String(req.query.q||'').trim().toLowerCase();if(q.length<3)return res.json([]);res.json(accounts.data.users.filter(x=>x.id!==u.id&&x.username.toLowerCase().startsWith(q)).slice(0,8).map(x=>({id:x.id,username:x.username,level:1+Math.floor(Math.sqrt(x.rewards.xp/70))})));});
 app.post('/api/friends/request',(req,res)=>{try{accounts.friendRequest(scope.getStore().user,req.body.username);res.json({ok:true});}catch(e){authError(res,e.message);}});
@@ -116,9 +113,7 @@ app.get('/api/leaderboard',(req,res)=>res.json(accounts.leaderboard(scope.getSto
 // Owner-only, opt-in official Roblox gift-card requests. No direct Robux trading.
 app.post('/api/owner/claim',(req,res)=>{try{res.json(accounts.ownerClaim(scope.getStore().user,req.body.code));}catch(e){authError(res,e.message);}});
 app.get('/api/owner',(req,res)=>{try{res.json({...accounts.ownerView(scope.getStore().user),whatsappConfigured:!!whatsappConfig()});}catch(e){authError(res,e.message,403);}});
-app.post('/api/owner/giftcards',(req,res)=>{try{res.json(accounts.ownerEnable(scope.getStore().user,req.body.enabled===true));}catch(e){authError(res,e.message,403);}});
 app.post('/api/owner/review',(req,res)=>{try{res.json(accounts.ownerReview(scope.getStore().user,req.body.id,req.body.status));}catch(e){authError(res,e.message,403);}});
-app.get('/api/giftcards',(req,res)=>res.json(accounts.giftCatalog()));
 async function attemptGiftNotice(requestId){
   const record=accounts.data.redemptions.find(x=>x.id===requestId);
   if(!record)throw Error('Aanvraag niet gevonden.');
@@ -138,11 +133,6 @@ async function attemptGiftNotice(requestId){
   accounts.persist();if(cloudQueue)await cloudQueue.flush();
   return result;
 }
-app.post('/api/giftcards/request',async(req,res)=>{try{
-  const result=accounts.requestGift(scope.getStore().user,req.body.itemId);
-  const notice=await attemptGiftNotice(result.request.id);
-  res.json({...result,notification:notice.status});
-}catch(e){authError(res,e.message);}});
 app.post('/api/owner/resend',async(req,res)=>{try{
   const owner=scope.getStore().user;accounts.ownerCheck(owner);
   await attemptGiftNotice(String(req.body.id||''));
@@ -336,7 +326,7 @@ async function scanTwoColumns(region,divider,reader,language,automatic=false){
   const rightImage=await extractColumn(region,rightStart,width-rightStart);
   // Sparse-text recognition is important for thin rows, low contrast and
   // wrapped meanings: PSM 6 silently loses entire lines in some photographs.
-  const rightLanguage=automatic?([language,'nld'].filter((x,i,a)=>a.indexOf(x)===i).join('+')):(language==='nld'?'eng':'nld');
+  const rightLanguage=language==='nld'?'eng':'nld';
   const right=await reader.read(rightImage,automatic?11:6,rightLanguage);
   const aligned=pairAligned(left.lines,right.lines);
   let best=aligned;
@@ -422,7 +412,7 @@ app.post('/api/ocr',upload.single('image'),async (req,res) => {
   const layout=['auto','book','columns','lines'].includes(req.body.layout)?req.body.layout:'auto';
   try {
     // Rotate using the EXIF tag, so crop coordinates match the rotated picture displayed on mobile.
-    const prepared=await sharp(req.file.buffer).rotate().resize({width:1900,withoutEnlargement:true}).flatten({background:'#ffffff'}).grayscale().normalize().sharpen().png().toBuffer();
+    const prepared=await sharp(req.file.buffer).rotate().resize({width:2600,height:3000,fit:'inside',withoutEnlargement:true}).flatten({background:'#ffffff'}).grayscale().normalize().sharpen().png().toBuffer();
     const meta=await sharp(prepared).metadata();
     const requestedCrop=cropFromPercents(req.body.crop);
     const defaultBook={x:.57,y:.13,w:.34,h:.50};
@@ -433,12 +423,16 @@ app.post('/api/ocr',upload.single('image'),async (req,res) => {
         // Full photo, not a hand-selected rectangle. Identify the tightly
         // aligned, short vocabulary columns from their coordinates; ignore
         // the much longer example sentences and a neighboring book page.
-        const overview=await reader.read(prepared,11,selected);
-        const found=discoverGlossary(overview.lines,meta.width,meta.height);
+        const overview=await reader.read(prepared,11);
+        let found=discoverGlossary(glossaryLines(overview.tsv),meta.width,meta.height);
+        const structured=found?null:await reader.read(prepared,3);
+        if(structured)found=discoverGlossary(glossaryLines(structured.tsv),meta.width,meta.height);
         if(!found){
-          return res.json({pairs:[],raw:overview.text,layout,method:'automatische herkenning',
-            diagnostics:{leftLines:0,rightLines:0,review:0},
-            warning:'Ik kon de twee woordkolommen niet betrouwbaar vinden in deze foto. Maak een scherpe foto van de hele pagina, recht van boven, zonder schaduw of reflectie. Er zijn geen willekeurige woordparen gemaakt.'});
+          const output=structured||overview;
+          const pairs=parseInline(output.text).map(pair=>({...pair,needsReview:true}));
+          return res.json({pairs,raw:output.text,layout,method:'tekstregels met scheidingstekens',
+            diagnostics:{leftLines:pairs.length,rightLines:pairs.length,review:pairs.length},
+            warning:pairs.length?'Controleer de woordparen die op één regel staan.':'Geen woordparen gevonden. Maak een scherpere foto of fotografeer een kleiner deel van de bladzijde.'});
         }
         const region=await sharp(prepared).extract(found.crop).png().toBuffer();
         const result=await scanTwoColumns(region,found.divider,reader,selected,true);

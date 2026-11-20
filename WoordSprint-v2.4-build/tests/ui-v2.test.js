@@ -12,7 +12,6 @@ function boot(){
   else if(url==='/api/profile')data=profile();
   else if(url==='/api/state')data={lists,progress:{},activity:[]};
   else if(url==='/api/config')data={qr:'',lanUrl:'http://localhost:3000/#scan'};
-  else if(url==='/api/rewards')data={profile:profile(),catalog:[{id:'first',title:'Eerste woord',icon:'🌱',description:'1 woord',xp:20,coins:15}],shop:[{id:'neon',title:'Neon thema',description:'Kleur',icon:'🎨',price:250}],quests:[{id:'new3',title:'Leer 3 woorden',progress:0,target:3,reward:20,done:false}],audit:[]};
   else if(url==='/api/friends')data={friends:[],requests:[]};
   else if(url.startsWith('/api/leaderboard'))data=[{id:'u1',username,level:1,weeklyXp:0}];
   else if(url==='/api/game/start')data={gameId:'mock'};
@@ -33,11 +32,11 @@ function boot(){
  return {ctx,get,calls,profile,lists,run:src=>vm.runInContext(src,ctx),listeners};
 }
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
-test('login and register screen followed by personalized dashboard, shop, friends and leaderboard',async()=>{
+test('login and register screen followed by personalized dashboard, friends and leaderboard',async()=>{
  const a=boot();await flush();assert.match(a.get('#app').innerHTML,/Registreren/);
  await a.run("handleSubmit({target:{id:'auth-form',elements:{username:{value:'Leerling123'},password:{value:'EenGoedWachtwoord12'}}},preventDefault(){}})");
  await flush();assert.match(a.get('#app').innerHTML,/Woordjes leren/);assert.equal(a.get('#top-avatar').textContent,'L');
- a.run("location.hash='#rewards'");await a.run('refreshAndRenderSocial()');assert.match(a.get('#app').innerHTML,/Officiële Roblox-cadeaubonnen/);assert.match(a.get('#app').innerHTML,/Neon thema/);
+ a.run("location.hash='#rewards'");await a.run('refreshAndRenderSocial()');assert.match(a.get('#app').innerHTML,/Woordjes leren/);assert.ok(!a.calls.some(([url])=>url==='/api/rewards'));
  a.run("location.hash='#friends'");await a.run('refreshAndRenderSocial()');assert.match(a.get('#app').innerHTML,/Vriend toevoegen/);
  a.run("location.hash='#leaderboard'");await a.run('refreshAndRenderSocial()');assert.match(a.get('#app').innerHTML,/Deze week/);
  a.run("location.hash='#profile';render()");assert.match(a.get('#app').innerHTML,/Leerling123/);

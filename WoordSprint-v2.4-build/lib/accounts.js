@@ -242,7 +242,7 @@ class Accounts{
     this.data.ownerId=u.id;this.persist();if(!fromEnv)fs.renameSync(this.ownerCodeFile,this.ownerCodeFile+'.gebruikt');return this.profile(u);
   }
   ownerCheck(u){if(this.data.ownerId!==u.id)throw Error('Alleen de beheerder kan dit doen.');}
-  ownerView(u){this.ownerCheck(u);return {enabled:this.data.giftCardsEnabled,catalog:GIFT_CARDS,requests:this.data.redemptions.map(r=>({...r,username:this.data.users.find(x=>x.id===r.userId)?.username||'Gebruiker'})).slice(-150).reverse()};}
+  ownerView(u){this.ownerCheck(u);return {users:this.data.users.map(({username})=>({username})).sort((a,b)=>a.username.localeCompare(b.username)),requests:this.data.redemptions.map(r=>({...r,username:this.data.users.find(x=>x.id===r.userId)?.username||'Gebruiker'})).slice(-150).reverse()};}
   ownerEnable(u,enabled){this.ownerCheck(u);this.data.giftCardsEnabled=enabled===true;this.persist();return this.ownerView(u);}
   giftCatalog(){return {enabled:this.data.giftCardsEnabled&&!!this.data.ownerId,catalog:GIFT_CARDS};}
   requestGift(u,itemId){
