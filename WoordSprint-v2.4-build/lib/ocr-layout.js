@@ -41,6 +41,24 @@ function makeLines(words){
   }).filter(l=>validLabel(l.text)).sort((a,b)=>a.y-b.y);
 }
 function tsvLines(tsv){return makeLines(parseTsv(tsv));}
+function glossaryLines(tsv){
+  const rows=new Map();
+  const words=parseTsv(tsv);
+  for(const word of words){
+    if(!rows.has(word.key))rows.set(word.key,[]);
+    rows.get(word.key).push(word);
+  }
+  for(const row of rows.values()){
+    row.sort((a,b)=>a.x-b.x);
+    let section=0;
+    for(let i=0;i<row.length;i++){
+      const word=row[i],previous=row[i-1];
+      if(previous&&word.x-previous.x-previous.width>Math.max(word.height,previous.height)*1.6)section++;
+      word.key+=':'+section;
+    }
+  }
+  return makeLines(words);
+}
 function splitTsvColumns(tsv,imageWidth,divider=.47){
   if(!tsv)return {left:[],right:[]};
   const words=parseTsv(tsv);
@@ -51,25 +69,26 @@ function combine(prev,part){
   const a=String(prev).trimEnd(),b=String(part).trim();
   return clean(a+(a.endsWith('/')||a.endsWith('-')||a.endsWith('(')?'':' ')+b);
 }
-function shouldContinue(prev,next,typicalStep,baseX,rightLines){
-  const spacing=next.y-prev.y;
-  if(spacing<=0||spacing>typicalStep*1.6)return false;
-  // The strong indicator is the slash/hyphen after the previous printed row.
+function isWrapped(prev,next,following,opposite,step,offset=0){
+  const gap=next.y-prev.y;
+  if(gap<=0||gap>step*1.6)return false;
   if(/[/\-(]$/.test(prev.text))return true;
-  // Indentation alone is NOT evidence: exclamation marks before printed
-  // words can indent a normal entry ("! lawyer" in the sample photo). A wrong
-  // merge is worse than showing one extra entry for manual correction.
-  return false;
+  const lineHeight=Math.max(prev.height||0,next.height||0);
+  if(!lineHeight||gap>lineHeight*1.9)return false;
+  const tolerance=lineHeight*.7;
+  const oppositeNear=y=>opposite.some(line=>Math.abs(line.y-y-offset)<=tolerance);
+  if(!oppositeNear(prev.y)||oppositeNear(next.y))return false;
+  return (following&&following.y-next.y>gap*1.25&&oppositeNear(following.y))||
+    next.x-prev.x>lineHeight*.4;
 }
 function groupLeftEntries(lines,rightLines=[]){
   const rows=lines.filter(l=>validLabel(l.text)).sort((a,b)=>a.y-b.y);
   const steps=rows.slice(1).map((r,i)=>r.y-rows[i].y).filter(s=>s>8&&s<130);
   const step=median(steps)||50;
-  const minX=rows.length?Math.min(...rows.map(r=>r.x??0)):0;
   const out=[];
-  for(const row of rows){
+  for(const [index,row] of rows.entries()){
     const prev=out[out.length-1];
-    if(prev&&shouldContinue(prev.lastLine,row,step,minX,rightLines)){
+    if(prev&&isWrapped(prev.lastLine,row,rows[index+1],rightLines,step)){
       prev.text=combine(prev.text,row.text);
       prev.endY=row.y;prev.lastLine=row;
       prev.confidence=Math.min(prev.confidence,row.confidence??70);
@@ -115,9 +134,9 @@ function pairAligned(leftInput,rightInput){
       const entry=entries[i];
       const nextStart=entries[i+1]?.y??Infinity;
       if(r.y<=rec.line.y||r.y>=Math.min(nextStart-step*.3,rec.line.y+step*1.6))continue;
-      const rightContinuation=/[/\-(]$/.test(rec.line.text)||
+      const rightContinuation=isWrapped(rec.line,r,right[right.indexOf(r)+1],entries.map(entry=>entry.lastLine),step,-offset)||
         (r.x!==undefined&&rec.line.x!==undefined&&r.x-rec.line.x>Math.max(16,rec.line.height*.6));
-      if(rightContinuation){rec.line={...rec.line,text:combine(rec.line.text,r.text),confidence:Math.min(rec.line.confidence||75,r.confidence||75)};unmatched.splice(unmatched.indexOf(r),1);break;}
+      if(rightContinuation){rec.line={...r,text:combine(rec.line.text,r.text),confidence:Math.min(rec.line.confidence||75,r.confidence||75)};unmatched.splice(unmatched.indexOf(r),1);break;}
     }
   }
   const pairs=[],details=[];
@@ -146,4 +165,4 @@ function pairTextColumns(a,b){
   if(!left.length||left.length!==right.length)return [];
   return left.map((front,i)=>({front,back:right[i],needsReview:true}));
 }
-module.exports={tsvLines,splitTsvColumns,pairAligned,cropFromPercents,pairTextColumns,groupLeftEntries};
+module.exports={tsvLines,glossaryLines,splitTsvColumns,pairAligned,cropFromPercents,pairTextColumns,groupLeftEntries};

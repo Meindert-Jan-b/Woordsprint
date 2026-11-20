@@ -30,3 +30,21 @@ test('ontbrekende TSV levert lege regels op zonder servercrash',()=>{
  assert.deepEqual(tsvLines(''),[]);
  assert.deepEqual(splitTsvColumns('',450),{left:[],right:[]});
 });
+
+test('koppelt doorlopende tekst op twee regels aan beide kanten zonder leesteken',()=>{
+ const line=(text,y,x)=>({text,y,x,height:16,confidence:95});
+ const left=[
+   line('to bring something',40,10),line('to an end',58,10),
+   line('to wonder',95,10),line('to understand',149,10)
+ ];
+ const right=[
+   line('een einde maken aan',40,170),
+   line('zich afvragen over',95,170),line('een gebeurtenis',113,170),
+   line('begrijpen',149,170)
+ ];
+ assert.deepEqual(pairAligned(left,right).pairs,[
+   {front:'to bring something to an end',back:'een einde maken aan'},
+   {front:'to wonder',back:'zich afvragen over een gebeurtenis'},
+   {front:'to understand',back:'begrijpen'}
+ ]);
+});
