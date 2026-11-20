@@ -238,3 +238,20 @@ body { background: var(--bg); }
 @media (max-width: 930px) {
   .mobile-nav { grid-template-columns: repeat(6, minmax(0,1fr)); }
 }
+
+.book-volume { margin-bottom: 14px; }
+.book-volume > summary, .book-import > summary { cursor: pointer; font-weight: 700; }
+.book-volume > summary { padding: 17px 20px; background: var(--violet-light); border-radius: 7px; }
+.book-volume > summary .muted { margin-left: 8px; font-weight: 500; font-size: 13px; }
+.book-section { padding: 14px 18px; }
+.book-section h2 { font-size: 16px; margin-bottom: 10px; }
+.book-import { max-width: 760px; margin-top: 22px; }
+.book-import form { padding-top: 14px; }
+.book-import .checkrow { margin: 10px 0 16px; }
+.book-format { margin-bottom: 14px; }
+.book-format summary { cursor: pointer; color: var(--purple); }
+.book-format pre { white-space: pre-wrap; background: var(--bg); padding: 12px; border-radius: 7px; }
+
+.book-section > summary { cursor: pointer; font-weight: 700; }
+.book-section > .book-grid { margin-top: 10px; }
+.profile-styles { margin: 16px 0; }

@@ -33,7 +33,7 @@ let scanDraft={rows:[],raw:'',diagnostics:'',scanWarning:'',file:null,preview:nu
 const {normalized,isCorrect,alternatives}=WoordAnswers;
 const contextExamples=typeof WoordContextExamples!=='undefined'?WoordContextExamples:{};
 
-let bookData=null,bookLoading=false,bookError='',bookSearch='';
+let bookData=[],bookLoading=false,bookError='',bookSearch='';
 let listSearch='';
 let listFilter='all';
 let lastRoute = '';
@@ -56,9 +56,9 @@ async function request(url, opts={}){
   return data;
 }
 async function refreshState(){db=await request('/api/state');await refreshProfile();}
-async function refreshProfile(){currentUser=await request('/api/profile');$('#top-xp').textContent=fmt(xpTotal())+' XP';$('#top-coins').textContent=fmt(currentUser.coins)+' coins';$('#top-avatar').textContent=(currentUser.username||'W').slice(0,1).toUpperCase();}
+async function refreshProfile(){currentUser=await request('/api/profile');$('#top-xp').textContent=fmt(xpTotal())+' XP';$('#top-avatar').textContent=(currentUser.username||'W').slice(0,1).toUpperCase();}
 function savePrefs(){localStorage.setItem('ws-prefs',JSON.stringify(prefs));}
-function pageTitle(label){$('#breadcrumb').textContent=label;$('#top-xp').textContent=fmt(xpTotal())+' XP';$('#top-coins').textContent=fmt(currentUser?.coins||0)+' coins';}
+function pageTitle(label){$('#breadcrumb').textContent=label;$('#top-xp').textContent=fmt(xpTotal())+' XP';}
 function setActive(view){for(const a of document.querySelectorAll('[data-nav]'))a.classList.toggle('active',a.dataset.nav===view);}
 function cleanUpSession(){if(session?.ticker){clearInterval(session.ticker);session.ticker=null;}if(session?.delay){clearTimeout(session.delay);session.delay=null;}}
 function navigate(view){location.hash='#'+view;}
@@ -80,7 +80,7 @@ function render(){
     case 'list':html=renderListDetail(arg);break;
     case 'edit':html=renderEditor(arg);break;
     case 'contexts':html=renderContexts(arg);break;
-    case 'play':html=renderPlay();break;
+    case 'play':if(!session)restoreActiveLearnSession();html=renderPlay();break;
     case 'games':html=renderGames();break;
     case 'scan':html=renderScan();break;
     case 'studygo':html=renderStudyGo();break;
@@ -92,6 +92,7 @@ function render(){
     default:html=renderDashboard();break;
   }
   $('#app').innerHTML=html;
+  if(page==='play')saveLearnSession(session);
   // Automatic scanning uses the complete photograph; no crop selection needed.
   if(page==='play' && session && !session.done && session.mode==='dictation' && session.firstSound!==session.index){session.firstSound=session.index;setTimeout(()=>{if(location.hash==='#play'&&session?.mode==='dictation') speak(answerFor(currentQuestion()),langAnswer());},300);}
   if(page==='play' && ['type','test','learn','hint','dictation','scramble','context'].includes(session?.mode) && !session?.feedback && !session?.done){$('#answer-input')?.focus({preventScroll:true});}
@@ -113,17 +114,12 @@ function modeCompletionChip(l,m){
  return s.done?'<span class="mode-status mode-done" aria-label="Voltooid">✓ Voltooid</span>':`<span class="mode-status mode-pending">${s.count} / ${s.total} woorden</span>`;
 }
 function modeCard(l,m){
- return `<button class="mode-card ${modeCompletionStatus(l,m.id).done?'completed':''}" data-action="start-mode" data-id="${esc(l.id)}" data-mode="${m.id}"><span class="mode-icon">${m.icon}</span><h3>${m.name}</h3><p>${m.text}</p>${modeCompletionChip(l,m)}</button>`;
+ return `<button class="mode-card ${modeCompletionStatus(l,m.id).done?'completed':''}" data-action="start-mode" data-id="${esc(l.id)}" data-mode="${m.id}"><span class="mode-icon">${m.icon}</span><h3>${m.id==='learn'&&loadLearnSession(l)?'Slim leren hervatten':m.name}</h3><p>${m.text}</p>${modeCompletionChip(l,m)}</button>`;
 }
 function modeDoneSummary(l){const total=modes.length+games.length;const count=[...modes,...games].filter(m=>modeCompletionStatus(l,m.id).done).length;return `${count}/${total} oefenstanden afgerond`;}
-function listBonusStatus(l){
- const side=prefs.direction==='reverse'?'reverse':'forward';
- return db.listBonuses?.[l.id]?.[side]||{wordCount:l.words.length,completedModes:0,totalModes:modes.length+games.length,allDone:false,newWords:l.words.length,possibleCoins:l.words.length*40,rate:40};
-}
 function listBonusPanel(l){
- const b=listBonusStatus(l);
- const label=b.allDone?(b.possibleCoins?`🎁 ${fmt(b.possibleCoins)} bonuscoins klaar!`:'✓ Deze woordparen zijn al beloond'):`🎯 ${b.completedModes}/${b.totalModes} oefenstanden klaar`;
- return `<div class="card card-pad list-bonus-panel"><div class="row" style="align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><h3 style="margin:0 0 6px">🪙 Complete-lijstbonus</h3><p class="muted tiny" style="margin:0">${esc(label)} · ${b.wordCount} unieke woorden · 40 coins per nieuw woord</p><p class="muted tiny" style="margin:6px 0 0">25 woorden = 1.000 coins · bonus slechts één keer per woordpaar (ook bij kopieën)</p></div>${b.allDone&&b.possibleCoins?`<button class="btn" data-action="claim-list-bonus" data-id="${esc(l.id)}">Claim ${fmt(b.possibleCoins)} coins</button>`:''}</div><div class="meter" style="margin-top:12px"><i style="width:${b.totalModes?Math.round(b.completedModes/b.totalModes*100):0}%"></i></div></div>`;
+ const completed=modeDoneSummary(l);
+ return `<section class="card card-pad list-bonus-panel"><h3>Voortgang van deze lijst</h3><p class="muted">${esc(completed)}</p></section>`;
 }
 function listOrigin(l){return l.demo?'Voorbeeld':l.source==='studygo'?'StudyGo-import':l.source==='scan'?'Gescand':l.source==='book'?'Finish Up':l.source==='class'?'Klaslijst':l.source==='manual'?'Zelf gemaakt':'Bestaande lijst';}
 function isImported(l){return l.source==='studygo'||l.source==='scan'||l.source==='book';}
@@ -156,7 +152,7 @@ function renderClasses(classId){
  if(!selected){
    return `<header class="page-heading"><div><h1>Klassen</h1><p>Kies je klas en open een woordenlijst.</p></div></header>
      <div class="class-grid">${classData.map(entry=>`<a class="card class-card" href="#classes/${esc(entry.id)}">
-       <h2>${esc(entry.name)}</h2><span class="muted">${entry.lists.length} woordenlijsten</span></a>`).join('')}</div>
+       <h2>${esc(entry.name)}</h2><span class="muted">${entry.lists.length} hoofdstukken en lijsten</span></a>`).join('')}</div>
      ${classData.length?'':'<p class="muted">Er zijn nog geen klassen.</p>'}
      ${canManage?`<form class="card card-pad class-form" id="class-create">
        <h2>Klas toevoegen</h2><label class="field-group">Klasnaam<input class="input" name="name" maxlength="80" placeholder="Bijv. 1MA Duits" required></label>
@@ -164,10 +160,12 @@ function renderClasses(classId){
  }
  return `<a class="backline" href="#classes">← Alle klassen</a>
    <header class="page-heading"><div><h1>${esc(selected.name)}</h1><p>Open een lijst om met je eigen voortgang te oefenen.</p></div></header>
-   <div class="simple-list-grid">${selected.lists.map(list=>`<article class="card list-simple">
+   ${bookFinder(selected.id)}
+   <div class="simple-list-grid">${selected.lists.filter(list=>!list.book).map(list=>`<article class="card list-simple">
      <div><h3>${esc(list.name)}</h3><span class="muted">${esc(list.subject)} · ${list.wordCount} woorden</span></div>
      <button class="btn btn-secondary" data-action="class-open" data-class-id="${esc(selected.id)}" data-id="${esc(list.id)}">Open lijst</button>
-   </article>`).join('')||'<p class="muted">Deze klas heeft nog geen woordenlijsten.</p>'}</div>
+   </article>`).join('')}</div>
+   ${canManage?bookImportForm(selected.id):''}
    ${canManage?`<form class="card card-pad class-form" id="class-publish" data-id="${esc(selected.id)}">
      <h2>Woordenlijst delen</h2>
      <p class="muted">Alle ingelogde gebruikers kunnen klaslijsten openen. Deel dezelfde lijst opnieuw om nieuwe woorden toe te voegen. Leerlingen krijgen die woorden zodra ze de klaslijst opnieuw openen.</p>
@@ -177,19 +175,112 @@ function renderClasses(classId){
    </form>`:''}`;
 }
 
-function bookRows(){
- if(!bookData)return '';
+function booksForClass(classId){
+ const books=new Map();
+ for(const list of classData.find(entry=>entry.id===classId)?.lists||[]){
+   if(!list.book)continue;
+   if(!books.has(list.book.id))books.set(list.book.id,{title:list.book.title,chapters:[]});
+   books.get(list.book.id).chapters.push({...list.book,id:list.id,title:list.name,wordCount:list.wordCount});
+ }
+ return [...books.values()];
+}
+function bookRows(classId=''){
+ const books=classId?booksForClass(classId):bookData;
  const query=bookSearch.trim().toLocaleLowerCase('nl');
- const filtered=bookData.chapters.filter(c=>((c.number??'')+' '+c.title+' '+c.section).toLocaleLowerCase('nl').includes(query));
- if(!filtered.length)return '<p class="muted">Geen hoofdstukken gevonden.</p>';
- const sections=[...new Set(filtered.map(c=>c.section))];
- return sections.map(section=>`<div class="section-heading"><h2>${esc(section)}</h2></div><div class="book-grid">${filtered.filter(c=>c.section===section).map(c=>{const l=db.lists.find(l=>l.bookChapter===c.id);return `<button class="card book-row" data-action="book-chapter" data-id="${esc(c.id)}"><span class="book-number">${c.number??'📘'}</span><span class="book-copy"><strong>${esc(c.title)}</strong><small>${c.wordCount} woorden${l?' · '+masteryPct(l)+'% geleerd':''}</small></span><span class="book-arrow">→</span></button>`;}).join('')}</div>`).join('');
+ const matches=books.map(book=>({...book,chapters:book.chapters.filter(chapter=>
+   [book.title,chapter.title,chapter.section,chapter.number==null?'':'hoofdstuk '+chapter.number,chapter.page==null?'':'pagina '+chapter.page]
+     .join(' ').toLocaleLowerCase('nl').includes(query)
+ )})).filter(book=>book.chapters.length);
+ if(!matches.length)return `<p class="muted">${query?'Geen hoofdstukken gevonden.':'Er zijn nog geen boeken toegevoegd.'}</p>`;
+ return matches.map((book,index)=>`<details class="card book-volume" ${query||index===0?'open':''}>
+   <summary><strong>${esc(book.title)}</strong> <span class="muted">${book.chapters.length} hoofdstukken</span></summary>
+   ${[...new Set(book.chapters.map(chapter=>chapter.section))].map(section=>{
+     const chapters=book.chapters.filter(chapter=>chapter.section===section).sort((a,b)=>(a.number??Infinity)-(b.number??Infinity));
+     return `<details class="book-section" ${query||section===book.chapters[0].section?'open':''}><summary>${esc(section)}</summary><div class="book-grid">${chapters.map(chapter=>{
+       const list=classId?db.lists.find(item=>item.classListId===chapter.id):getList(chapter.listId);
+       return `<button class="card book-row" data-action="${classId?'class-open':'book-chapter'}" data-class-id="${esc(classId)}" data-id="${esc(chapter.id)}">
+         ${chapter.number==null?'':`<span class="book-number">${chapter.number}</span>`}
+         <span class="book-copy"><strong>${esc(chapter.title)}</strong><small>${chapter.wordCount} woorden${chapter.page==null?'':' · p. '+chapter.page}${list?' · '+masteryPct(list)+'% geleerd':''}</small></span>
+         <span class="book-arrow" aria-hidden="true">→</span></button>`;
+     }).join('')}</div></details>`;
+   }).join('')}</details>`).join('');
+}
+function bookFinder(classId=''){
+ return `<div class="book-search"><input class="search-input" type="search" id="book-search" data-class-id="${esc(classId)}"
+   placeholder="Zoek op boek, hoofdstuk of paginanummer" value="${esc(bookSearch)}" aria-label="Zoek in boeken"></div>
+   <div id="book-results">${bookRows(classId)}</div>`;
+}
+function readBookText(raw){
+ const lines=raw.split(/\r?\n/);
+ const title=lines.shift()?.trim();
+ if(!title)throw Error('Zet de boektitel op de eerste regel.');
+ const chapters=[];
+ let chapter;
+ let section='Hoofdstukken';
+ const addChapter=(title,group)=>{
+   chapter={id:'hoofdstuk-'+(chapters.length+1),number:chapters.length+1,title,section:group,words:[]};
+   chapters.push(chapter);
+ };
+ const entries=lines.map((line,index)=>({value:line.trim(),line:index+2})).filter(row=>row.value);
+ for(const [index,row] of entries.entries()){
+   const {value,line}=row;
+   if(value.startsWith('# ')){
+     const heading=value.slice(2).trim();
+     if(entries[index+1]?.value.startsWith('## ')){
+       section=heading;
+       chapter=null;
+     }else{
+       section='Hoofdstukken';
+       addChapter(heading,section);
+     }
+   }else if(value.startsWith('## ')){
+     addChapter(value.slice(3).trim(),section);
+   }else{
+     const pair=parsePairs(value)[0];
+     if(!chapter||!pair)throw Error('Controleer regel '+line+': gebruik # Hoofdstuk, ## Paragraaf of woord - vertaling.');
+     chapter.words.push(pair);
+   }
+ }
+ return {format:'woordsprint-book-v1',title,chapters};
+}
+function bookImportForm(classId=''){
+ return `<details class="card card-pad book-import"><summary>Hele boeken toevoegen</summary>
+   <form id="book-import-form" data-class-id="${esc(classId)}">
+     <p class="muted">Upload één bestand per boek (.txt of WoordSprint .json). Je kunt meerdere bestanden tegelijk kiezen.</p>
+     <label class="field-group">Boekbestanden<input type="file" name="book" accept=".txt,.json,text/plain,application/json" multiple required></label>
+     <details class="book-format"><summary>Voorbeeld van een tekstbestand</summary><pre>Mijn Duitse boek
+# Hoofdstuk 1
+## 1.1 Kennismaken
+Guten Morgen - goedemorgen
+## 1.2 Op school
+das Buch - het boek</pre></details>
+     <div class="form-grid">
+       <label class="field-group">Vak<select name="subject">${subjectOptions(classId?'Duits':'Engels')}</select></label>
+       <label class="field-group">Taal van de woorden<select name="fromLang">${languageOptions(classId?'de-DE':'en-GB')}</select></label>
+       <label class="field-group">Taal van de vertalingen<select name="toLang">${languageOptions('nl-NL')}</select></label>
+     </div>
+     <label class="checkrow"><input type="checkbox" name="rights" required> Ik mag deze woordenlijsten delen met ingelogde gebruikers.</label>
+     <button class="btn" type="submit">Boeken toevoegen</button>
+   </form></details>`;
 }
 function renderBook(){
- const ownerForm=currentUser?.owner?`<div class="card card-pad"><form id="book-import-form"><strong>${bookData?'Gedeeld boek vervangen':'Boek eenmalig publiceren'}</strong><p class="muted tiny">Alle ingelogde gebruikers krijgen toegang. Publiceer alleen materiaal waarvoor je toestemming hebt. Persoonlijke lijsten en voortgang blijven bewaard.</p><input type="file" name="book" accept=".json,application/json" required><label style="display:block;margin:12px 0"><input type="checkbox" name="rights" required> Ik heb toestemming om deze boekinhoud met alle gebruikers te delen.</label><button class="btn" type="submit">Publiceer voor iedereen</button></form></div>`:'';
- return `<div class="page-heading"><div><span class="eyebrow">GEDEELDE BOEKBIBLIOTHEEK</span><h1>${esc(bookData?.title||'Finish Up')}</h1><p>Kies een hoofdstuk en oefen meteen. Je voortgang is persoonlijk.</p></div><a href="#lists" class="btn btn-secondary">Mijn lijsten</a></div>${bookLoading?'<div class="card card-pad">Boek laden…</div>':bookError?`<div class="card card-pad"><p>${esc(bookError)}</p><button class="btn" data-action="book-refresh">Opnieuw proberen</button></div>`:!bookData&&!currentUser?.owner?'<div class="card card-pad">De beheerder heeft nog geen boek gepubliceerd.</div>':''}${ownerForm}${bookData?`<div class="book-search"><input class="search-input" type="search" id="book-search" placeholder="Zoek hoofdstuknummer of onderwerp…" value="${esc(bookSearch)}" aria-label="Zoek hoofdstuk"></div><div id="book-results">${bookRows()}</div>`:''}`;
+ return `<header class="page-heading"><div><h1>Finish Up</h1><p>Kies een boek en zoek het hoofdstuk dat je wilt oefenen.</p></div></header>
+   ${bookLoading?'<div class="card card-pad">Boeken laden…</div>':bookError?`<div class="card card-pad"><p>${esc(bookError)}</p><button class="btn" data-action="book-refresh">Opnieuw proberen</button></div>`:bookFinder()}
+   ${currentUser?.owner?bookImportForm():''}`;
 }
-async function loadBook(){const uid=currentUser?.id;bookLoading=true;bookError='';try{const result=await request('/api/book');if(currentUser?.id===uid)bookData=result.book;}catch(e){if(currentUser?.id===uid){bookData=null;bookError=e.message;}}finally{if(currentUser?.id===uid)bookLoading=false;}}
+async function loadBook(){
+ const uid=currentUser?.id;
+ bookLoading=true;
+ bookError='';
+ try{
+   const result=await request('/api/book');
+   if(currentUser?.id===uid)bookData=result.books;
+ }catch(e){
+   if(currentUser?.id===uid){bookData=[];bookError=e.message;}
+ }finally{
+   if(currentUser?.id===uid)bookLoading=false;
+ }
+}
 function renderLists(){
  const count=db.lists.filter(isImported).length;
  return `<div class="page-heading"><div><span class="eyebrow">AL JE LIJSTEN OP ÉÉN PLEK</span><h1>Mijn woordenlijsten</h1><p>Klik op een lijst om alle woordjes te bekijken, of begin direct met leren.</p></div><div class="toolbar"><a class="btn btn-secondary" href="#book">📘 Finish Up</a><a class="btn btn-secondary" href="#studygo">↧ Importeren</a><a class="btn" href="#edit/new">+ Nieuwe lijst</a></div></div>
@@ -238,7 +329,7 @@ function renderContexts(id){
   return `<div class="context-row"><div class="context-word"><strong>${i+1}. ${esc(w.front)}</strong><span class="muted tiny">${esc(w.back)}</span></div><div class="context-edit-col"><input class="input" data-context-id="${esc(w.id)}" data-context-field="context" value="${esc(w.context||'')}" placeholder="Yesterday I [[ate]] an apple." aria-label="Oefenzin voor ${esc(w.front)}">${!w.context&&preview?`<span class="muted tiny">Standaardzin: ${esc(preview.context)}</span>`:''}</div><input class="input" data-context-id="${esc(w.id)}" data-context-field="contextForms" value="${esc(w.contextForms||'')}" placeholder="Extra goede vormen (optioneel)" aria-label="Andere geldige vormen voor ${esc(w.front)}"></div>`;
  }).join('')}</div><p class="form-hint">In de contextmodus geldt alleen de vorm tussen de haken als correct. Zet andere echt passende vormen in de derde kolom (gescheiden met /). Woorden zonder bruikbare oefenzin worden overgeslagen.</p><div class="toolbar"><button class="btn btn-big" type="submit">✓ Zinnen opslaan</button><a class="btn btn-secondary" href="#list/${encodeURIComponent(id)}">Annuleren</a></div></div></form>`;
 }
-function renderGames(){return `<div class="page-heading"><div><span class="eyebrow">SPELEND LEREN</span><h1>Gamezone 🎮</h1><p>Daag jezelf uit met vier verschillende games.</p></div></div><div class="card card-pad" style="margin-bottom:22px"><div class="row" style="flex-wrap:wrap"><strong>Met welke lijst wil je spelen?</strong><select id="game-list" class="field" style="min-width:220px;flex:1">${db.lists.map(l=>`<option value="${esc(l.id)}">${esc(l.name)} (${l.words.length} woorden)</option>`).join('')}</select></div></div><section class="mode-grid">${games.map(m=>`<button class="mode-card" data-action="start-game" data-mode="${m.id}"><span class="mode-icon">${m.icon}</span><h3>${m.name}</h3><p>${m.text}</p></button>`).join('')}</section><div class="section-heading"><div><h2>Nog meer oefenen?</h2><p>Alle methodes zijn beschikbaar zonder abonnement.</p></div></div><div class="mode-grid">${modes.slice(0,4).map(m=>`<button class="mode-card" data-action="start-game" data-mode="${m.id}"><span class="mode-icon">${m.icon}</span><h3>${m.name}</h3><p>${m.text}</p></button>`).join('')}</div>`;}
+function renderGames(){return `<div class="page-heading"><div><span class="eyebrow">SPELEND LEREN</span><h1>Gamezone 🎮</h1><p>Daag jezelf uit met vier verschillende games.</p></div></div><div class="card card-pad" style="margin-bottom:22px"><div class="row" style="flex-wrap:wrap"><strong>Met welke lijst wil je spelen?</strong><select id="game-list" class="field" style="min-width:220px;flex:1">${db.lists.map(l=>`<option value="${esc(l.id)}">${esc(l.name)} (${l.words.length} woorden)</option>`).join('')}</select></div></div><section class="mode-grid">${games.map(m=>`<button class="mode-card" data-action="start-game" data-mode="${m.id}"><span class="mode-icon">${m.icon}</span><h3>${m.id==='learn'&&loadLearnSession(l)?'Slim leren hervatten':m.name}</h3><p>${m.text}</p></button>`).join('')}</section><div class="section-heading"><div><h2>Nog meer oefenen?</h2><p>Alle methodes zijn beschikbaar zonder abonnement.</p></div></div><div class="mode-grid">${modes.slice(0,4).map(m=>`<button class="mode-card" data-action="start-game" data-mode="${m.id}"><span class="mode-icon">${m.icon}</span><h3>${m.id==='learn'&&loadLearnSession(l)?'Slim leren hervatten':m.name}</h3><p>${m.text}</p></button>`).join('')}</div>`;}
 function renderStats(){const mastered=db.lists.reduce((a,l)=>a+masteredCount(l),0),all=db.lists.reduce((a,l)=>a+l.words.length,0),correct=db.activity.reduce((a,d)=>a+(d.correct||0),0),total=answeredTotal();return `<div class="page-heading"><div><span class="eyebrow">JOUW VOORTGANG</span><h1>Statistieken</h1><p>Zo gaat het met jouw woordjes.</p></div></div><div class="kpi-grid compact"><div class="card kpi-card"><span class="kpi-icon">⚡</span><div><div class="value">${fmt(xpTotal())}</div><div class="small-name">Totaal XP</div></div></div><div class="card kpi-card"><span class="kpi-icon teal">✓</span><div><div class="value">${fmt(mastered)}</div><div class="small-name">Beheerste woorden</div></div></div><div class="card kpi-card"><span class="kpi-icon yellow">🎯</span><div><div class="value">${total?Math.round(correct/total*100):0}%</div><div class="small-name">Goed beantwoord</div></div></div><div class="card kpi-card"><span class="kpi-icon pink">🔥</span><div><div class="value">${dayStreak()}</div><div class="small-name">Dagelijkse streak</div></div></div></div><div class="two-col"><div class="card card-pad"><h3>Je activiteit</h3><p class="muted tiny">Totaal ${fmt(total)} keer geoefend, verspreid over ${db.activity.filter(x=>x.answered).length} dagen.</p>${graph()}</div><div class="card card-pad"><h3>Al onder de knie</h3><p class="muted tiny">Minimaal drie keer goed opgebouwd in de oefenstanden.</p><div class="result-score" style="margin:5px 0">${all?Math.round(mastered/all*100):0}%</div><div class="meter"><i style="width:${all?Math.round(mastered/all*100):0}%"></i></div><p class="muted tiny" style="margin-top:12px">${mastered} van ${all} woordjes</p></div></div><div class="section-heading"><h2>Per woordenlijst</h2></div><div class="card card-pad stats-list">${db.lists.map(l=>`<div class="stats-row"><div class="row"><span class="subject-icon">${iconFor(l)}</span><div><strong>${esc(l.name)}</strong><div class="muted tiny">${masteredCount(l)} van ${l.words.length} beheerst</div></div></div><div class="row"><span class="tag">${masteryPct(l)}%</span><a class="simple-link" href="#list/${encodeURIComponent(l.id)}">Open →</a></div></div>`).join('')||'<p>Je hebt nog geen woordenlijsten.</p>'}</div><p class="stat-disclaimer" style="margin-top:17px">Je lijsten, XP en beloningen zijn persoonlijk en staan op jouw WoordSprint-server. Gebruik een beveiligde HTTPS-server voordat je de website openbaar maakt.</p>`;}
 function renderScan(){
  const d=scanDraft;
@@ -273,11 +364,52 @@ function renderStudyGo(){
 function studygoImported(result){studygoDraft.rows=(result.pairs||[]).map(x=>({front:x.front,back:x.back}));studygoDraft.visible=50;studygoDraft.method=result.method||'';studygoDraft.message=studygoDraft.rows.length+' woordparen gevonden ('+studygoDraft.method+')';studygoDraft.error='';if(!studygoDraft.name.trim())studygoDraft.name=(result.title||'StudyGo woordenlijst').slice(0,110);}
 function buildQuestion(w,reverse){return {wordId:w.id,question:reverse?w.back:w.front,answer:reverse?w.front:w.back,qLang:reverse?session.list.toLang:session.list.fromLang,aLang:reverse?session.list.fromLang:session.list.toLang};}
 function buildContextQuestion(w){return WoordCloze.questionFor(w,session.list,contextExamples);}
+function learnStorageKey(list,direction=prefs.direction){
+ return 'ws-learn-v1:'+currentUser?.id+':'+list.id+':'+direction;
+}
+function learnListVersion(list){
+ return JSON.stringify([list.fromLang,list.toLang,list.words.map(({id,front,back})=>[id,front,back])]);
+}
+function loadLearnSession(list){
+ if(!currentUser?.id)return null;
+ try{
+   const saved=JSON.parse(localStorage.getItem(learnStorageKey(list))||'null');
+   if(!saved||saved.version!==learnListVersion(list)||!saved.queue[saved.index])return null;
+   return {
+     ...saved,list,mode:'learn',direction:prefs.direction,submitting:false,
+     learn:{completed:new Set(saved.completed),errors:new Map(saved.errors)}
+   };
+ }catch{return null;}
+}
+function restoreActiveLearnSession(){
+ try{
+   const list=getList(localStorage.getItem('ws-active-learn-v1:'+currentUser?.id));
+   if(list)session=loadLearnSession(list);
+ }catch{/* Browser storage is optional. */}
+}
+function saveLearnSession(s){
+ if(!currentUser?.id||s?.mode!=='learn')return;
+ const key=learnStorageKey(s.list,s.direction);
+ try{
+   const activeKey='ws-active-learn-v1:'+currentUser.id;
+   if(s.done){localStorage.removeItem(key);localStorage.removeItem(activeKey);return;}
+   localStorage.setItem(activeKey,s.list.id);
+   const {words,queue,index,correct,wrong,answered,feedback,showAnswer,hints,choiceOptions,choiceCorrectIndex,
+     questionNonce,selectedOption,mistakes,earnedXp}=s;
+   localStorage.setItem(key,JSON.stringify({
+     words,queue,index,correct,wrong,answered,feedback,showAnswer,hints,choiceOptions,choiceCorrectIndex,
+     questionNonce,selectedOption,mistakes,earnedXp,version:learnListVersion(s.list),
+     completed:[...s.learn.completed],errors:[...s.learn.errors]
+   }));
+ }catch{/* The round remains playable if browser storage is unavailable. */}
+}
 function startSession(listId,mode){
  const l=getList(listId);if(!l){toast('Kies eerst een woordenlijst.',true);return;}
  if(!l.words.length){toast('Deze lijst bevat geen woordjes.',true);return;}
  if(['memory','match'].includes(mode)&&l.words.length<2){toast('Voor dit spel heb je minimaal twee woordparen nodig.',true);return;}
  if(session)cleanUpSession();
+ const saved=mode==='learn'?loadLearnSession(l):null;
+ if(saved){session=saved;navigate('play');render();return;}
  let words=[...l.words];
  if(mode==='context'){words=words.filter(w=>!!WoordCloze.questionFor(w,l,contextExamples));if(!words.length){toast('Er zijn nog geen geldige invulzinnen met [[het antwoord]]. Voeg er eerst een paar toe.',true);navigate('contexts/'+encodeURIComponent(l.id));return;}}
  if(prefs.hard){let hard=words.filter(w=>(db.progress[l.id]?.[w.id]?.mastery||0)<3);if(hard.length)words=hard;else toast('Alles is al beheerst! Je oefent de hele lijst.');}
@@ -285,11 +417,10 @@ function startSession(listId,mode){
  if(prefs.count!=='all')words=words.slice(0,Number(prefs.count));
  // Memory and Koppelspel use ALL selected words, divided into short rounds.
  const gameWords=['memory','match'].includes(mode)?[...words]:null;
- session={list:l,mode,words,queue:[],index:0,correct:0,wrong:0,answered:0,feedback:null,showAnswer:false,done:false,hints:0,choiceOptions:null,choiceCorrectIndex:null,questionNonce:0,selectedOption:null,mistakes:[],repeated:{},timeLeft:60,firstSound:-1,earnedXp:0,earnedCoins:0,submitting:false,gameId:null,gameReady:false,fullGameWords:gameWords,totalMatched:new Set(),roundIndex:0,roundFinished:false};
+ session={list:l,mode,direction:prefs.direction,words,queue:[],index:0,correct:0,wrong:0,answered:0,feedback:null,showAnswer:false,done:false,hints:0,choiceOptions:null,choiceCorrectIndex:null,questionNonce:0,selectedOption:null,mistakes:[],repeated:{},timeLeft:60,firstSound:-1,earnedXp:0,submitting:false,gameId:null,gameReady:false,fullGameWords:gameWords,totalMatched:new Set(),roundIndex:0,roundFinished:false};
  const toQ=w=>{const reverse=prefs.direction==='reverse'||(prefs.direction==='mixed'&&Math.random()<.5);return buildQuestion(w,reverse);};
  if(mode==='learn'){
   session.learn=WoordLearn.create(words);
-  session.learnBuild=toQ;
   session.queue=WoordLearn.initialTasks(session.learn,toQ);
  }else for(const w of words){if(mode==='context'){session.queue.push(buildContextQuestion(w));continue;}session.queue.push(toQ(w));}
  if(['memory','match'].includes(mode))beginGameRound(session);
@@ -319,15 +450,13 @@ function gameRoundDone(s){
 }
 function applyRewardResult(result){
  if(!session)return;
- session.earnedXp+=(result.awardedXp||0);session.earnedCoins+=(result.awardedCoins||0);
+ session.earnedXp+=(result.awardedXp||0);
  if(result.stat){const m=(db.progress[session.list.id]||={});m[result.wordId||'']=result.stat;}
  if(result.modeProgress){(db.modeProgress||={})[session.list.id]=result.modeProgress;}
  if(result.modeStatus){(db.modeStatus||={})[session.list.id]=result.modeStatus;}
- if(result.listBonus){const side=prefs.direction==='reverse'?'reverse':'forward';((db.listBonuses||={})[session.list.id]||={})[side]=result.listBonus;}
  if(result.activity){const i=db.activity.findIndex(x=>x.date===result.activity.date);if(i<0)db.activity.push(result.activity);else db.activity[i]=result.activity;}
- if(result.profile){currentUser=result.profile;$('#top-xp').textContent=fmt(xpTotal())+' XP';$('#top-coins').textContent=fmt(currentUser.coins)+' coins';}
- if(result.awardedXp)toast('+'+result.awardedXp+' XP · +'+result.awardedCoins+' coins');
- if(result.listBonusCoins)toast('🎁 Hele lijst voltooid: +'+fmt(result.listBonusCoins)+' bonuscoins!');
+ if(result.profile){currentUser=result.profile;$('#top-xp').textContent=fmt(xpTotal())+' XP';}
+ if(result.awardedXp)toast('+'+result.awardedXp+' XP');
  if(result.badges?.length)toast('🏆 '+result.badges.join(', '));
 }
 function currentQuestion(){return session?.queue[session.index];}
@@ -370,15 +499,13 @@ async function submitAnswer(given,selectedOption=null,choiceCorrect=null){
  session.submitting=false;session.selectedOption=selectedOption;
  session.answered++;if(correct)session.correct++;
  else {session.wrong++;session.mistakes.push({question:session.mode==='context'?q.contextBefore+'___'+q.contextAfter+' ('+q.question+')':q.question,expected:result.expected||q.answer,given:given||'—'});}
- session.earnedXp+=(result.awardedXp||0);session.earnedCoins+=(result.awardedCoins||0);
+ session.earnedXp+=(result.awardedXp||0);
  if(result.stat){const m=(db.progress[session.list.id] ||= {});m[q.wordId]=result.stat;}
  if(result.modeProgress){(db.modeProgress||={})[session.list.id]=result.modeProgress;}
  if(result.modeStatus){(db.modeStatus||={})[session.list.id]=result.modeStatus;}
- if(result.listBonus){const side=prefs.direction==='reverse'?'reverse':'forward';((db.listBonuses||={})[session.list.id]||={})[side]=result.listBonus;}
- if(result.listBonusCoins)toast('🎁 Hele lijst voltooid: +'+fmt(result.listBonusCoins)+' bonuscoins!');
  if(result.activity){const index=db.activity.findIndex(x=>x.date===result.activity.date);if(index>=0)db.activity[index]=result.activity;else db.activity.push(result.activity);}
- if(result.profile){currentUser=result.profile;$('#top-xp').textContent=fmt(xpTotal())+' XP';$('#top-coins').textContent=fmt(currentUser.coins)+' coins';}
- if((result.awardedXp||0)>0)toast('+'+result.awardedXp+' XP · +'+result.awardedCoins+' coins!');
+ if(result.profile){currentUser=result.profile;$('#top-xp').textContent=fmt(xpTotal())+' XP';}
+ if((result.awardedXp||0)>0)toast('+'+result.awardedXp+' XP');
  if(result.badges?.length)toast('🏆 Badge verdiend: '+result.badges.join(', '));
  if(session.mode==='learn')WoordLearn.schedule(session.learn,session.queue,session.index,q,correct);
  if(session.mode==='test'){nextQuestion();return;}
@@ -400,7 +527,7 @@ function renderPlay(){if(!session)return `<div class="card empty-state"><h2>Geen
  else if(s.mode==='match')body=renderMatch();
  else body=renderQuestion();
  const learnProgress=s.mode==='learn'?`<div class="learn-track" aria-label="Leerfase">${WoordLearn.NAMES.map((name,i)=>`<span class="learn-track-step ${currentQuestion()?.stage===i?'now':currentQuestion()?.stage>i?'done':''}">${i+1}. ${name}</span>`).join('')}</div><div class="learn-status">${s.learn.completed.size} van ${s.words.length} woorden volledig geleerd · Gevarieerd oefenen: nieuw → meerkeuze → nieuw → hints → typen</div>`:'';
- return `<div class="play-shell"><div class="play-top"><a href="#list/${encodeURIComponent(s.list.id)}" class="backline" style="margin:0">← Stoppen</a><strong>${title}</strong>${timer}</div><div class="round-progress"><i style="width:${progress}%"></i></div>${learnProgress}${s.mode==='learn'?`<div class="dir-in-play">${dirButtons(s.list)}</div>`:''}<div class="score-pills"><span class="tag green">✓ ${s.correct} goed</span><span class="tag red">× ${s.wrong} fout</span><span class="tag">⚡ +${s.earnedXp} XP · 🪙 +${s.earnedCoins} coins</span></div><div class="card play-card">${body}</div><div class="muted tiny" style="text-align:center;margin-top:19px">${esc(s.list.name)} · ${esc(languages[s.list.fromLang])} / ${esc(languages[s.list.toLang])}</div></div>`;
+ return `<div class="play-shell"><div class="play-top"><a href="#list/${encodeURIComponent(s.list.id)}" class="backline" style="margin:0">← ${s.mode==='learn'?'Pauzeren':'Stoppen'}</a><strong>${title}</strong>${timer}</div><div class="round-progress"><i style="width:${progress}%"></i></div>${learnProgress}${s.mode==='learn'?`<div class="dir-in-play">${dirButtons(s.list)}</div>`:''}<div class="score-pills"><span class="tag green">✓ ${s.correct} goed</span><span class="tag red">× ${s.wrong} fout</span><span class="tag">⚡ +${s.earnedXp} XP</span></div><div class="card play-card">${body}</div><div class="muted tiny" style="text-align:center;margin-top:19px">${esc(s.list.name)} · ${esc(languages[s.list.fromLang])} / ${esc(languages[s.list.toLang])}</div></div>`;
 }
 function renderQuestion(){const s=session,q=currentQuestion();if(!q)return `<p>Alle vragen zijn beantwoord.</p>`;
  const effective=getEffectiveMode(),hasFeedback=!!s.feedback;
@@ -430,7 +557,7 @@ function renderQuestion(){const s=session,q=currentQuestion();if(!q)return `<p>A
 }
 function renderMemory(){const s=session;if(s.roundFinished)return `<div class="game-round-finished"><h2>✓ Ronde klaar!</h2><p>${s.totalMatched.size} van ${s.fullGameWords.length} woordparen gedaan</p><button class="btn btn-big" data-action="next-game-round">Volgende ronde →</button></div>`;return `<div class="play-kicker">ZOEK DE BIJ ELKAAR HORENDE PAREN</div><h3 style="margin:10px 0 19px">${s.totalMatched.size} van ${s.fullGameWords.length} woordparen gevonden</h3><div class="game-board">${s.tiles.map((t,i)=>{const open=s.picks.includes(i),matched=s.matched.has(t.id);return `<button class="memory-tile ${matched?'matched':open?'':'covered'}" data-action="memory-pick" data-index="${i}" ${matched||s.locked?'disabled':''}>${matched||open?esc(t.label):'✦'}</button>`;}).join('')}</div><p class="play-instruction" style="margin:16px 0 0">Draai steeds twee kaarten om. Vind een woord en de vertaling.</p>`;}
 function renderMatch(){const s=session;if(s.roundFinished)return `<div class="game-round-finished"><h2>✓ Ronde klaar!</h2><p>${s.totalMatched.size} van ${s.fullGameWords.length} woordparen gedaan</p><button class="btn btn-big" data-action="next-game-round">Volgende ronde →</button></div>`;const col=(items,side)=>`<div class="match-column">${items.map(w=>`<button class="match-item ${s.matched.has(w.id)?'matched':s.selected[side]===w.id?'selected':''}" data-action="match-pick" data-id="${esc(w.id)}" data-side="${side}" ${s.matched.has(w.id)||s.locked?'disabled':''}>${esc(w.label)}</button>`).join('')}</div>`;return `<div class="play-kicker">VERBIND DE VERTALINGEN</div><h3 style="margin:10px 0 22px">${s.totalMatched.size} van ${s.fullGameWords.length} gekoppeld</h3><div class="match-cols">${col(s.left,'front')}${col(s.right,'back')}</div>`;}
-function renderResult(title){const s=session;const ratio=s.answered?s.correct/s.answered:0,grade=(1+9*ratio).toFixed(1).replace('.',',');return `<div class="play-shell"><a href="#list/${encodeURIComponent(s.list.id)}" class="backline">← Terug naar je lijst</a><div class="card play-card" style="padding:45px 28px"><div class="result-emoji">${ratio>=.8?'🏆':ratio>=.5?'🎉':'💪'}</div><div class="eyebrow">RONDE AFGEROND</div><h1 class="result-title">${ratio>=.8?'Lekker bezig!':ratio>=.5?'Goed geoefend!':'Blijf oefenen!'}</h1><p class="muted">${esc(title)} · ${esc(s.list.name)}</p>${s.mode==='test'?`<div class="result-score">${grade}</div><p class="muted tiny">Je oefencijfer</p>`:`<div class="result-score">${Math.round(ratio*100)}%</div><p class="muted tiny">Goed beantwoord</p>`}<div class="score-pills"><span class="tag green">✓ ${s.correct} goed</span><span class="tag red">× ${s.wrong} fout</span><span class="tag">⚡ ${s.earnedXp} XP · 🪙 ${s.earnedCoins} coins</span></div><div class="play-buttons" style="margin-top:21px"><button class="btn btn-big" data-action="again">Opnieuw oefenen ↻</button><a href="#list/${encodeURIComponent(s.list.id)}" class="btn btn-secondary btn-big">Andere oefenstand</a></div></div>${s.mistakes.length?`<div class="card card-pad" style="margin-top:19px"><h3>Deze woorden kun je nog oefenen</h3><div class="stats-list">${s.mistakes.slice(0,30).map(x=>`<div class="stats-row"><div><strong>${esc(x.question)}</strong><div class="tiny muted">Jij: ${esc(x.given)}</div></div><span class="tag red">${esc(x.expected)}</span></div>`).join('')}</div></div>`:''}</div>`;}
+function renderResult(title){const s=session;const ratio=s.answered?s.correct/s.answered:0,grade=(1+9*ratio).toFixed(1).replace('.',',');return `<div class="play-shell"><a href="#list/${encodeURIComponent(s.list.id)}" class="backline">← Terug naar je lijst</a><div class="card play-card" style="padding:45px 28px"><div class="result-emoji">${ratio>=.8?'🏆':ratio>=.5?'🎉':'💪'}</div><div class="eyebrow">RONDE AFGEROND</div><h1 class="result-title">${ratio>=.8?'Lekker bezig!':ratio>=.5?'Goed geoefend!':'Blijf oefenen!'}</h1><p class="muted">${esc(title)} · ${esc(s.list.name)}</p>${s.mode==='test'?`<div class="result-score">${grade}</div><p class="muted tiny">Je oefencijfer</p>`:`<div class="result-score">${Math.round(ratio*100)}%</div><p class="muted tiny">Goed beantwoord</p>`}<div class="score-pills"><span class="tag green">✓ ${s.correct} goed</span><span class="tag red">× ${s.wrong} fout</span><span class="tag">⚡ ${s.earnedXp} XP</span></div><div class="play-buttons" style="margin-top:21px"><button class="btn btn-big" data-action="again">Opnieuw oefenen ↻</button><a href="#list/${encodeURIComponent(s.list.id)}" class="btn btn-secondary btn-big">Andere oefenstand</a></div></div>${s.mistakes.length?`<div class="card card-pad" style="margin-top:19px"><h3>Deze woorden kun je nog oefenen</h3><div class="stats-list">${s.mistakes.slice(0,30).map(x=>`<div class="stats-row"><div><strong>${esc(x.question)}</strong><div class="tiny muted">Jij: ${esc(x.given)}</div></div><span class="tag red">${esc(x.expected)}</span></div>`).join('')}</div></div>`:''}</div>`;}
 async function verifiedGamePair(s,frontId,backId,known=false){
  if(!s.gameReady||!s.gameId)throw Error('Het spel is nog aan het laden.');
  const r=await request('/api/game/match',{method:'POST',body:{listId:s.list.id,gameId:s.gameId,frontId,backId,known}});
@@ -460,7 +587,16 @@ function renderAuth(){
  document.body.classList.add('unauthenticated');
  $('#app').innerHTML=`<section class="auth-page"><div class="auth-pane"><div class="auth-mark" aria-hidden="true">W</div><h1>WoordSprint</h1><p>${authMode==='login'?'Log in om verder te oefenen.':'Maak een account aan om je voortgang op te slaan.'}</p><div class="auth-tabs"><button class="${authMode==='login'?'on':''}" data-action="auth-toggle" data-mode="login">Inloggen</button><button class="${authMode==='register'?'on':''}" data-action="auth-toggle" data-mode="register">Registreren</button></div><form id="auth-form" class="auth-form"><label>Gebruikersnaam<input class="input" name="username" required minlength="3" maxlength="20" autocomplete="username" placeholder="Jouw gebruikersnaam"></label><label>Wachtwoord<input class="input" name="password" required minlength="8" maxlength="128" autocomplete="${authMode==='login'?'current-password':'new-password'}" type="password" placeholder="Minimaal 8 tekens"></label><button type="submit" class="btn btn-big">${authMode==='login'?'Inloggen':'Account aanmaken'} →</button></form><p class="muted tiny">Je account en woordenlijsten worden veilig op de server opgeslagen. Deel je wachtwoord nooit.</p></div></section>`;
 }
-function renderProfile(){const u=currentUser||{};const nextLevelTarget=70*Math.pow(u.level||1,2),previousLevelTarget=70*Math.pow((u.level||1)-1,2);const levelPct=Math.max(0,Math.min(100,Math.round(((u.xp||0)-previousLevelTarget)/(nextLevelTarget-previousLevelTarget)*100)));return `<div class="page-heading"><div><span class="eyebrow">JOUW ACCOUNT</span><h1>Mijn profiel</h1><p>Je voortgang blijft bewaard als je op een ander apparaat inlogt.</p></div><button class="btn btn-secondary" data-action="logout">Uitloggen</button></div><div class="profile-hero card ${u.equipped==='banner'?'galaxy':u.equipped==='neon'?'neon':''}"><div class="profile-portrait ${u.equipped==='frame'?'starred':''}">${esc((u.username||'W')[0].toUpperCase())}</div><div><span class="eyebrow">LEVEL ${u.level}</span><h2 class="${u.equipped==='gold'?'gold-name':''}">${esc(u.username)}</h2><p>⚡ ${fmt(u.xp)} XP · 🪙 ${fmt(u.coins)} coins · 🔥 ${u.streak} dagen streak</p><div class="level-meter"><div class="meter"><i style="width:${levelPct}%"></i></div><small>${fmt(Math.max(0,nextLevelTarget-u.xp))} XP tot level ${(u.level||1)+1}</small></div></div></div>${!u.owner?`<form id="owner-claim-form" class="row" style="margin:14px 0;flex-wrap:wrap"><input class="input" name="code" placeholder="Alleen voor eigenaar: privé-beheerdercode" style="flex:1;min-width:180px"><button class="btn btn-secondary">Beheerder activeren</button></form>`:''}<div class="profile-links">${u.owner?`<a class="btn" href="#owner">🔐 Beheerder</a>`:''}<a class="btn" href="#rewards">🪙 Rewards shop</a><a class="btn btn-secondary" href="#friends">👥 Vrienden</a><a class="btn btn-secondary" href="#leaderboard">🏆 Klassement</a></div><section class="kpi-grid compact"><div class="card kpi-card"><span class="kpi-icon">📚</span><div><div class="value">${u.mastered}</div><div class="small-name">Unieke woorden beheerst</div></div></div><div class="card kpi-card"><span class="kpi-icon teal">🏅</span><div><div class="value">${u.badges?.length||0}</div><div class="small-name">Badges verdiend</div></div></div><div class="card kpi-card"><span class="kpi-icon yellow">👥</span><div><div class="value">${u.friends||0}</div><div class="small-name">Vrienden</div></div></div></section><div class="two-col"><div class="card card-pad"><h3>Behaalde badges</h3><div class="badge-grid">${(u.badges||[]).length?u.badges.map(b=>`<span class="tag">🏅 ${esc(b)}</span>`).join(''):'Je hebt nog geen badges. Leer nieuwe woorden om je eerste badge te halen.'}</div><p class="muted tiny">Een badge kan één keer XP én coins geven. Herhalen levert niet opnieuw een badge op.</p></div>${hosted?'':`<div class="card card-pad"><h3>Oude woordenlijsten overzetten</h3><p class="muted tiny">Heb je nog lijsten van v1.10? Plaats het oude <code>data/woordsprint.json</code> in de map <code>data</code>. Vind de migratiecode in <code>data/MIGRATIE-CODE-ALLEEN-VOOR-JOU.txt</code>. Dit kan maar één keer.</p><form id="legacy-form" class="row" style="flex-wrap:wrap"><input class="input" name="code" placeholder="Eenmalige migratiecode" required style="flex:1;min-width:170px"><button class="btn">Oude lijsten overzetten</button></form></div>`}</div>`;}
+function renderProfileStyles(user){
+ const styles=user.profileStyles||[];
+ return `<section class="card card-pad profile-styles"><h3>Profielstijlen</h3>
+   <div class="row profile-links">${[{id:'default',title:'Standaard',unlocked:true},...styles].map(style=>
+     `<button class="btn btn-secondary" data-action="profile-style" data-id="${esc(style.id)}"
+        ${!style.unlocked||((user.equipped||'default')===style.id)?'disabled':''}>
+        ${esc(style.title)}${!style.unlocked?' · Niveau '+style.level:''}${(user.equipped||'default')===style.id?' · Actief':''}
+     </button>`).join('')}</div></section>`;
+}
+function renderProfile(){const u=currentUser||{};const nextLevelTarget=70*Math.pow(u.level||1,2),previousLevelTarget=70*Math.pow((u.level||1)-1,2);const levelPct=Math.max(0,Math.min(100,Math.round(((u.xp||0)-previousLevelTarget)/(nextLevelTarget-previousLevelTarget)*100)));return `<div class="page-heading"><div><span class="eyebrow">JOUW ACCOUNT</span><h1>Mijn profiel</h1><p>Je voortgang blijft bewaard als je op een ander apparaat inlogt.</p></div><button class="btn btn-secondary" data-action="logout">Uitloggen</button></div><div class="profile-hero card ${u.equipped==='banner'?'galaxy':u.equipped==='neon'?'neon':''}"><div class="profile-portrait ${u.equipped==='frame'?'starred':''}">${esc((u.username||'W')[0].toUpperCase())}</div><div><span class="eyebrow">LEVEL ${u.level}</span><h2 class="${u.equipped==='gold'?'gold-name':''}">${esc(u.username)}</h2><p>⚡ ${fmt(u.xp)} XP · 🔥 ${u.streak} dagen streak</p><div class="level-meter"><div class="meter"><i style="width:${levelPct}%"></i></div><small>${fmt(Math.max(0,nextLevelTarget-u.xp))} XP tot level ${(u.level||1)+1}</small></div></div></div>${!u.owner?`<form id="owner-claim-form" class="row" style="margin:14px 0;flex-wrap:wrap"><input class="input" name="code" placeholder="Alleen voor eigenaar: privé-beheerdercode" style="flex:1;min-width:180px"><button class="btn btn-secondary">Beheerder activeren</button></form>`:''}<div class="profile-links">${u.owner?`<a class="btn" href="#owner">🔐 Beheerder</a>`:''}<a class="btn btn-secondary" href="#friends">👥 Vrienden</a><a class="btn btn-secondary" href="#leaderboard">🏆 Klassement</a></div>${renderProfileStyles(u)}<section class="kpi-grid compact"><div class="card kpi-card"><span class="kpi-icon">📚</span><div><div class="value">${u.mastered}</div><div class="small-name">Unieke woorden beheerst</div></div></div><div class="card kpi-card"><span class="kpi-icon teal">🏅</span><div><div class="value">${u.badges?.length||0}</div><div class="small-name">Badges verdiend</div></div></div><div class="card kpi-card"><span class="kpi-icon yellow">👥</span><div><div class="value">${u.friends||0}</div><div class="small-name">Vrienden</div></div></div></section><div class="two-col"><div class="card card-pad"><h3>Behaalde badges</h3><div class="badge-grid">${(u.badges||[]).length?u.badges.map(b=>`<span class="tag">🏅 ${esc(b)}</span>`).join(''):'Je hebt nog geen badges. Leer nieuwe woorden om je eerste badge te halen.'}</div><p class="muted tiny">Een badge kan één keer XP geven. Herhalen levert niet opnieuw een badge op.</p></div>${hosted?'':`<div class="card card-pad"><h3>Oude woordenlijsten overzetten</h3><p class="muted tiny">Heb je nog lijsten van v1.10? Plaats het oude <code>data/woordsprint.json</code> in de map <code>data</code>. Vind de migratiecode in <code>data/MIGRATIE-CODE-ALLEEN-VOOR-JOU.txt</code>. Dit kan maar één keer.</p><form id="legacy-form" class="row" style="flex-wrap:wrap"><input class="input" name="code" placeholder="Eenmalige migratiecode" required style="flex:1;min-width:170px"><button class="btn">Oude lijsten overzetten</button></form></div>`}</div>`;}
 function renderOwner(){
  if(!currentUser?.owner)return `<div class="card card-pad">Geen toegang tot beheerderpaneel.</div>`;
  const d=ownerData||{users:[],requests:[]};
@@ -471,9 +607,14 @@ function renderOwner(){
 function renderFriends(){const data=friendsData||{friends:[],requests:[]};return `<div class="page-heading"><div><span class="eyebrow">SAMEN LEREN</span><h1>Mijn vrienden</h1><p>Voeg iemand toe met diens gebruikersnaam. Jullie zien elkaars XP, niet elkaars woordenlijsten.</p></div><a class="btn" href="#leaderboard">🏆 Klassement</a></div><div class="card card-pad"><h3>Vriend toevoegen</h3><form id="friend-form" class="row" style="flex-wrap:wrap"><input class="input" name="username" placeholder="Gebruikersnaam" required maxlength="20" style="flex:1;min-width:180px"><button class="btn">Verstuur verzoek</button></form></div>${data.requests.length?`<div class="card card-pad" style="margin-top:15px"><h3>Nieuwe verzoeken</h3>${data.requests.map(u=>`<div class="friend-row"><strong>${esc(u.username)}</strong><div class="row"><button class="btn btn-sm" data-action="friend-respond" data-id="${esc(u.id)}" data-accept="true">Accepteren</button><button class="btn btn-secondary btn-sm" data-action="friend-respond" data-id="${esc(u.id)}" data-accept="false">Afwijzen</button></div></div>`).join('')}</div>`:''}<div class="card card-pad" style="margin-top:15px"><h3>Vrienden (${data.friends.length})</h3>${data.friends.length?data.friends.map(u=>`<div class="friend-row"><div><strong>${esc(u.username)}</strong><p class="muted tiny" style="margin:0">Level ${u.level} · ${fmt(u.xp)} XP</p></div><button class="btn btn-secondary btn-sm" data-action="friend-remove" data-id="${esc(u.id)}">Verwijder</button></div>`).join(''):'Je hebt nog geen vrienden toegevoegd.'}</div>`;}
 function renderLeaderboard(){const u=currentUser;return `<div class="page-heading"><div><span class="eyebrow">WEKELIJKSE RANGLIJST</span><h1>Klassement 🏆</h1><p>Alleen echt verdiende XP telt mee. De week begint op maandag.</p></div></div><div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:16px"><button class="btn ${leaderScope==='friends'?'':'btn-secondary'}" data-action="leader-scope" data-scope="friends">Vrienden</button><button class="btn ${leaderScope==='global'?'':'btn-secondary'}" data-action="leader-scope" data-scope="global">Openbaar klassement</button></div><div class="card card-pad"><h3>Deze week</h3>${leaderboardData.length?leaderboardData.map((p,i)=>`<div class="leader-row"><strong>#${i+1} ${esc(p.username)}${p.id===u.id?' (jij)':''}</strong><span>${fmt(p.weeklyXp)} XP · Level ${p.level}</span></div>`).join(''):'Er zijn nog geen scores deze week.'}</div><div class="card card-pad" style="margin-top:15px"><h3>Privacy</h3><p class="muted tiny">Je staat standaard alleen bij je vrienden in het klassement. Je kunt zelf kiezen of je ook in het openbare klassement wilt verschijnen.</p><label class="row" style="gap:9px"><input type="checkbox" id="global-optin" ${u.privacy?.showGlobal?'checked':''}> Toon mijn naam en XP ook openbaar</label></div>`;}
 async function loadSocial(view){if(view==='owner'&&currentUser?.owner)ownerData=await request('/api/owner');if(view==='friends')friendsData=await request('/api/friends');if(view==='leaderboard')leaderboardData=await request('/api/leaderboard?scope='+leaderScope);}
-async function refreshAndRenderSocial(){const view=location.hash.slice(1).split('/')[0];if(view==='classes'){classData=await request('/api/classes');if(location.hash.slice(1).split('/')[0]==='classes')render();return;}if(view==='book'){bookLoading=true;render();await loadBook();if(location.hash==='#book')render();return;}if(['friends','leaderboard','owner'].includes(view)){await refreshProfile();await loadSocial(view);}render();}
+async function refreshAndRenderSocial(){const view=location.hash.slice(1).split('/')[0];if(view==='classes'){bookSearch='';classData=await request('/api/classes');if(location.hash.slice(1).split('/')[0]==='classes')render();return;}if(view==='book'){bookSearch='';bookLoading=true;render();await loadBook();if(location.hash==='#book')render();return;}if(['friends','leaderboard','owner'].includes(view)){await refreshProfile();await loadSocial(view);}render();}
 async function handleClick(e){const button=e.target.closest('[data-action]');if(!button)return;const action=button.dataset.action;const id=button.dataset.id;
  if(action==='auth-toggle'){authMode=button.dataset.mode==='register'?'register':'login';renderAuth();return;}
+ if(action==='profile-style'){
+   currentUser=await request('/api/profile/style',{method:'POST',body:{id}});
+   render();
+   return;
+ }
  if(action==='book-refresh'){await loadBook();render();return;}
  if(action==='class-open'){
    button.disabled=true;
@@ -485,15 +626,8 @@ async function handleClick(e){const button=e.target.closest('[data-action]');if(
    return;
  }
  if(action==='book-chapter'){button.disabled=true;try{const existing=db.lists.find(l=>l.bookChapter===id);if(existing){navigate('list/'+encodeURIComponent(existing.id));return;}const r=await request('/api/book/chapter/'+encodeURIComponent(id),{method:'POST',body:{}});await refreshState();navigate('list/'+encodeURIComponent(r.list.id));}catch(e){button.disabled=false;throw e;}return;}
- if(action==='logout'){classData=[];bookData=null;bookError='';bookSearch='';await request('/api/auth/logout',{method:'POST',body:{}});currentUser=null;ownerData=null;friendsData=null;leaderboardData=[];cleanUpSession();session=null;location.hash='#dashboard';renderAuth();return;}
- if(action==='claim-list-bonus'){
-   const l=getList(id);if(!l)return;
-   const result=await request('/api/lists/'+encodeURIComponent(id)+'/bonus/claim',{method:'POST',body:{direction:prefs.direction}});
-   currentUser=result.profile;
-   db.listBonuses ||= {};
-   (db.listBonuses[id] ||= {})[prefs.direction==='reverse'?'reverse':'forward']=result.status;
-   render();toast(result.coins?'🎁 +'+fmt(result.coins)+' bonuscoins voor '+result.words+' unieke woorden!':'Deze woordparen hebben hun bonus al gehad.');return;
- }
+ if(action==='logout'){classData=[];bookData=[];bookError='';bookSearch='';await request('/api/auth/logout',{method:'POST',body:{}});currentUser=null;ownerData=null;friendsData=null;leaderboardData=[];cleanUpSession();session=null;location.hash='#dashboard';renderAuth();return;}
+
  if(action==='owner-resend'){ownerData=await request('/api/owner/resend',{method:'POST',body:{id}});render();toast('Verzoek opnieuw verwerkt. Bekijk de WhatsApp-status.');return;}
  if(action==='owner-review'){if(!confirm('Weet je zeker dat je deze aanvraag wilt '+(button.dataset.status==='delivered'?'markeren als afgeleverd':'afwijzen')+'?'))return;ownerData=await request('/api/owner/review',{method:'POST',body:{id,status:button.dataset.status}});render();return;}
  if(action==='leader-scope'){leaderScope=button.dataset.scope==='global'?'global':'friends';await loadSocial('leaderboard');render();return;}
@@ -530,7 +664,7 @@ async function handleClick(e){const button=e.target.closest('[data-action]');if(
   }catch(err){d.error=err.message;toast(err.message,true);d.busy=false;render();}return;
  }
  if(action==='lists-filter'){listFilter=button.dataset.filter||'all';render();return;}
- if(action==='direction-toggle'){const target=button.dataset.direction;if(!['forward','reverse'].includes(target))return;if(session&&!session.done&&location.hash==='#play'){if(!confirm('De leerrichting veranderen start deze ronde opnieuw. Doorgaan?'))return;const l=session.list.id,m=session.mode;prefs.direction=target;savePrefs();startSession(l,m);}else{prefs.direction=target;savePrefs();render();}return;}
+ if(action==='direction-toggle'){const target=button.dataset.direction;if(!['forward','reverse'].includes(target))return;if(session&&!session.done&&location.hash==='#play'){if(!confirm('Van leerrichting wisselen? Je kunt later verder met deze ronde.'))return;const l=session.list.id,m=session.mode;prefs.direction=target;savePrefs();startSession(l,m);}else{prefs.direction=target;savePrefs();render();}return;}
  if(action==='next-game-round'){if(session&&session.roundFinished){session.roundIndex++;beginGameRound(session);render();}return;}
  if(action==='quick-learn'){startSession(id,'learn');return;}
  if(action==='start-mode'){startSession(id,button.dataset.mode);return;}
@@ -614,7 +748,40 @@ async function handleSubmit(e){
    }finally{submit.disabled=false;}
    return;
  }
- if(e.target.id==='book-import-form'){e.preventDefault();const form=e.target,file=form.elements.book.files?.[0];if(!file)return;const button=form.querySelector('[type=submit]');button.disabled=true;try{if(file.size>3*1024*1024)throw Error('Boekbestand is te groot.');const data=JSON.parse(await file.text());const result=await request('/api/book/import',{method:'POST',body:{book:data,rightsConfirmed:form.elements.rights.checked}});bookData=result.book;bookError='';bookSearch='';render();toast('Boek gepubliceerd voor iedereen: '+bookData.chapters.length+' lijsten.');}catch(err){button.disabled=false;toast(err.message,true);}return;}
+ if(e.target.id==='book-import-form'){
+   e.preventDefault();
+   const form=e.target;
+   const button=form.querySelector('[type=submit]');
+   const classId=form.dataset.classId;
+   const endpoint=classId?'/api/classes/'+encodeURIComponent(classId)+'/books':'/api/book/import';
+   const options={
+     subject:form.elements.subject.value,fromLang:form.elements.fromLang.value,toLang:form.elements.toLang.value,
+     rightsConfirmed:form.elements.rights.checked
+   };
+   button.disabled=true;
+   let saved=0;
+   try{
+     for(const file of form.elements.book.files){
+       if(file.size>3*1024*1024)throw Error(file.name+' is te groot.');
+       const raw=await file.text();
+       const book=/\.txt$/i.test(file.name)?readBookText(raw):JSON.parse(raw);
+       const result=await request(endpoint,{method:'POST',body:{...options,book}});
+       if(classId)classData=result;
+       saved++;
+     }
+     toast(saved===1?'Boek toegevoegd.':saved+' boeken toegevoegd.');
+   }catch(err){
+     toast((saved?saved+' boeken opgeslagen. ':'')+err.message,true);
+   }finally{
+     if(saved){
+       if(!classId)await loadBook();
+       render();
+     }
+     button.disabled=false;
+   }
+   return;
+ }
+
 
  if(e.target.id==='auth-form'){e.preventDefault();const form=e.target;const u=form.elements.username.value.trim(),password=form.elements.password.value;try{const r=await request('/api/auth/'+(authMode==='register'?'register':'login'),{method:'POST',body:{username:u,password}});currentUser=r.user;await refreshState();config=await request('/api/config');navigate('dashboard');render();toast('Welkom '+currentUser.username+'!');}catch(err){toast(err.message,true);}return;}
  if(e.target.id==='owner-claim-form'){e.preventDefault();try{currentUser=await request('/api/owner/claim',{method:'POST',body:{code:e.target.elements.code.value}});toast('Beheerder geactiveerd!');render();}catch(err){toast(err.message,true);}return;}
@@ -668,7 +835,7 @@ function handleChange(e){const t=e.target;
  }
 }
 function handleInput(e){const t=e.target;
- if(t.id==='book-search'){bookSearch=t.value;$('#book-results').innerHTML=bookRows();return;}
+ if(t.id==='book-search'){bookSearch=t.value;$('#book-results').innerHTML=bookRows(t.dataset.classId);return;}
  if(t.id==='studygo-paste'){studygoDraft.paste=t.value;return;}
  if(t.dataset.studygoSetting){studygoDraft[t.dataset.studygoSetting]=t.value;return;}
  if(t.dataset.studygoRow!==undefined){const row=studygoDraft.rows[Number(t.dataset.studygoRow)];if(row)row[t.dataset.side]=t.value;return;}

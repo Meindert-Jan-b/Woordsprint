@@ -11,6 +11,14 @@ const SHOP = Object.freeze([
   {id:'frame',title:'Sterrenframe',description:'Een sterrenrand om je avatar',price:350,icon:'🌟'},
   {id:'banner',title:'Galaxy achtergrond',description:'Een sterrenachtergrond op je profiel',price:400,icon:'🌌'}
 ]);
+const PROFILE_STYLE_LEVELS={neon:2,frame:3,banner:4,gold:5};
+function profileStyles(user){
+  const level=publicUser(user).level;
+  return SHOP.map(({id,title})=>({
+    id,title,level:PROFILE_STYLE_LEVELS[id],
+    unlocked:level>=PROFILE_STYLE_LEVELS[id]||user.rewards.inventory?.includes(id)||user.rewards.equipped===id
+  }));
+}
 const QUESTS = Object.freeze([
   {id:'new3',title:'Leer drie nieuwe woorden',kind:'new',target:3,reward:20},
   {id:'correct10',title:'Leer of herhaal tien unieke woorden',kind:'correct',target:10,reward:15},
@@ -64,7 +72,7 @@ class Accounts{
   }
   persist(){const tmp=this.file+'.tmp';fs.writeFileSync(tmp,JSON.stringify(this.data,null,2));fs.renameSync(tmp,this.file);}
   hasLegacy(){if(!this.legacyPath||this.data.migrationClaimed)return false;try {const legacy=JSON.parse(fs.readFileSync(this.legacyPath,'utf8'));return Array.isArray(legacy.lists)&&legacy.lists.length>0;}catch{return false;}}
-  profile(u){return {...publicUser(u),owner:this.data.ownerId===u.id,redemptions:(this.data.redemptions||[]).filter(r=>r.userId===u.id).slice(-10).reverse().map(({id,itemId,price,status,createdAt})=>({id,itemId,price,status,createdAt})),friends:u.friends.length,streak:daysStreak(u.state.activity),mastered:Object.values(u.rewards.wordLedger).filter(x=>x.masteredAt).length,inventory:u.rewards.inventory,privacy:u.privacy,shop:SHOP,quests:this.quests(u),badgeCatalog:BADGES};}
+  profile(u){return {...publicUser(u),profileStyles:profileStyles(u),owner:this.data.ownerId===u.id,redemptions:(this.data.redemptions||[]).filter(r=>r.userId===u.id).slice(-10).reverse().map(({id,itemId,price,status,createdAt})=>({id,itemId,price,status,createdAt})),friends:u.friends.length,streak:daysStreak(u.state.activity),mastered:Object.values(u.rewards.wordLedger).filter(x=>x.masteredAt).length,inventory:u.rewards.inventory,privacy:u.privacy,shop:SHOP,quests:this.quests(u),badgeCatalog:BADGES};}
   register(username,password){username=clean(username);if(!/^[a-zA-Z0-9_]{3,20}$/.test(username))throw Error('Gebruikersnaam: 3–20 letters, cijfers of underscores.');if(typeof password!=='string'||password.length<8||password.length>128)throw Error('Wachtwoord moet 8–128 tekens hebben.');if(this.data.users.some(u=>u.username.toLowerCase()===username.toLowerCase()))throw Error('Deze gebruikersnaam is al bezet.');const u=makeUser(username,password);this.data.users.push(u);this.persist();return u;}
   login(username,password,ip='unknown'){
     const key=String(ip).slice(0,80);const t=this.clock(),attempt=(this.attempts.get(key)||[]).filter(x=>x>t-15*60_000);
@@ -264,6 +272,12 @@ class Accounts{
     this.persist();return this.ownerView(u);
   }
   weekKey(day=today()){const d=new Date(dateMs(day));const dow=(d.getUTCDay()+6)%7;return new Date(d.getTime()-dow*86400_000).toISOString().slice(0,10);}
+  setProfileStyle(user,styleId){
+    if(styleId!=='default'&&!profileStyles(user).some(style=>style.id===styleId&&style.unlocked))throw Error('Deze profielstijl is nog vergrendeld.');
+    user.rewards.equipped=styleId==='default'?null:styleId;
+    this.persist();
+    return this.profile(user);
+  }
   shopBuy(u,itemId){const item=SHOP.find(x=>x.id===itemId);if(!item)throw Error('Onbekende beloning.');if(u.rewards.inventory.includes(itemId))throw Error('Deze beloning heb je al.');if(u.rewards.coins<item.price)throw Error('Je hebt nog niet genoeg coins.');u.rewards.coins-=item.price;u.rewards.inventory.push(itemId);u.rewards.equipped=itemId;this.persist();return this.profile(u);}
   equip(u,itemId){if(!u.rewards.inventory.includes(itemId))throw Error('Je hebt deze beloning nog niet.');u.rewards.equipped=itemId;this.persist();return this.profile(u);}
   friendRequest(u,targetName){const t=this.data.users.find(x=>x.username.toLowerCase()===clean(targetName).toLowerCase());if(!t||t.id===u.id)throw Error('Gebruiker niet gevonden.');if(u.friends.includes(t.id))throw Error('Jullie zijn al vrienden.');if(t.friendRequests.includes(u.id))throw Error('Verzoek is al verstuurd.');if(t.friendRequests.length>=20)throw Error('Deze gebruiker heeft te veel openstaande verzoeken.');u.sentRequests||={};if(u.sentRequests[t.id]&&this.clock()-u.sentRequests[t.id]<86400000)throw Error('Je kunt deze gebruiker morgen opnieuw uitnodigen.');u.sentRequests[t.id]=this.clock();t.friendRequests.push(u.id);this.persist();return true;}
