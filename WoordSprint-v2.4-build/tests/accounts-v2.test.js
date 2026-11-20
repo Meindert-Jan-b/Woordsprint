@@ -61,3 +61,14 @@ test('scramble letter puzzle is still a supported answer mode',()=>{
  const {a}=setup(),u=a.register('scrambler','Superveilig123!'),l=list();
  assert.equal(a.reviewAnswer(u,l,l.words[0],'wetsgetrouw','scramble').correct,true);
 });
+
+test('profile styles unlock by level and preserve earlier purchases',()=>{
+ const {a}=setup();
+ const user=a.register('ProfielStijl','MijnUniekeWachtwoord9');
+ assert.throws(()=>a.setProfileStyle(user,'neon'),/vergrendeld/);
+ user.rewards.xp=70;
+ assert.equal(a.setProfileStyle(user,'neon').equipped,'neon');
+ user.rewards.inventory.push('gold');
+ assert.equal(a.setProfileStyle(user,'gold').equipped,'gold');
+ assert.equal(a.setProfileStyle(user,'default').equipped,null);
+});

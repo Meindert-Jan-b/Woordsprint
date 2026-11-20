@@ -102,6 +102,10 @@ app.use('/api',(req,res,next)=>{
   scope.run({user,state:user.state},()=>next());
 });
 app.get('/api/profile',(req,res)=>res.json(accounts.profile(scope.getStore().user)));
+app.post('/api/profile/style',(req,res)=>{
+  try{res.json(accounts.setProfileStyle(scope.getStore().user,req.body.id));}
+  catch(err){error(res,400,err.message);}
+});
 app.post('/api/profile/legacy',(req,res)=>{try{const n=accounts.claimLegacy(scope.getStore().user,req.body.code);res.json({ok:true,count:n});}catch(e){authError(res,e.message);}});
 app.post('/api/profile/privacy',(req,res)=>{const u=scope.getStore().user;u.privacy.showGlobal=req.body.showGlobal===true;save();res.json(accounts.profile(u));});
 app.get('/api/friends',(req,res)=>res.json(accounts.friendsView(scope.getStore().user)));

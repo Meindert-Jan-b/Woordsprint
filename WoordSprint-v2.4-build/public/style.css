@@ -251,3 +251,7 @@ body { background: var(--bg); }
 .book-format { margin-bottom: 14px; }
 .book-format summary { cursor: pointer; color: var(--purple); }
 .book-format pre { white-space: pre-wrap; background: var(--bg); padding: 12px; border-radius: 7px; }
+
+.book-section > summary { cursor: pointer; font-weight: 700; }
+.book-section > .book-grid { margin-top: 10px; }
+.profile-styles { margin: 16px 0; }

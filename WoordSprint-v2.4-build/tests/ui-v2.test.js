@@ -1,7 +1,7 @@
 'use strict';
 const test=require('node:test');const assert=require('node:assert/strict');const vm=require('node:vm');const fs=require('node:fs');const path=require('node:path');
 function boot(){
- const nodes=new Map(),listeners={};const get=s=>{if(!nodes.has(s))nodes.set(s,{innerHTML:'',textContent:'',value:'',classList:{add(){},remove(){},toggle(){}},appendChild(){},focus(){},remove(){}});return nodes.get(s);};
+ const nodes=new Map(),storage=new Map(),listeners={};const get=s=>{if(!nodes.has(s))nodes.set(s,{innerHTML:'',textContent:'',value:'',classList:{add(){},remove(){},toggle(){}},appendChild(){},focus(){},remove(){}});return nodes.get(s);};
  const lists=[{id:'l1',name:'FU 51 The law',subject:'Engels',fromLang:'en-GB',toLang:'nl-NL',source:'studygo',words:[{id:'w1',front:'law-abiding',back:'wetsgetrouw / gezagsgetrouw / ordelievend'},{id:'w2',front:'lawsuit',back:'rechtszaak / proces (I ...)'}]}];
  let username=null,xp=0,coins=0;const calls=[];
  const profile=()=>({id:'u1',username,level:1,xp,coins,streak:0,mastered:0,badges:[],inventory:[],equipped:null,privacy:{showGlobal:false},friends:0});
@@ -25,7 +25,7 @@ function boot(){
  };
  const ctx={console,Math,Date,JSON,Map,Set,Number,String,URL,FormData,
   document:{body:{classList:{add(){},remove(){}}},querySelector:get,querySelectorAll:()=>[],addEventListener(n,cb){listeners[n]=cb;},createElement:()=>({textContent:'',className:'',remove(){}})},
-  location:{hash:'#dashboard'},window:{addEventListener(n,cb){listeners[n]=cb;}},localStorage:{getItem(){return null},setItem(){}},
+  location:{hash:'#dashboard'},window:{addEventListener(n,cb){listeners[n]=cb;}},localStorage:{getItem:key=>storage.get(key)??null,setItem:(key,value)=>storage.set(key,value),removeItem:key=>storage.delete(key)},
   fetch,setTimeout:()=>1,setInterval:()=>1,clearTimeout(){},clearInterval(){},confirm:()=>true};
  const Answers=require('../public/answer-utils');vm.createContext(ctx);
  for(const file of ['answer-utils.js','cloze-utils.js','learn-engine.js','context-examples.js','app.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'../public',file),'utf8'),ctx);
@@ -59,4 +59,30 @@ test('typing one meaning works and flashcards use verified game route',async()=>
  a.run("startSession('l1','flash');session.gameReady=true;session.gameId='mock';session.showAnswer=true;render()");
  await a.run("handleClick({target:{closest:()=>({dataset:{action:'self-grade',correct:'true'}})}})");
  assert.equal(a.run('session.earnedXp'),10);
+});
+
+test('Slim leren resumes the saved queue and starts fresh after finishing',async()=>{
+ const a=boot();
+ await flush();
+ await a.run("handleSubmit({target:{id:'auth-form',elements:{username:{value:'Leerling123'},password:{value:'EenGoedWachtwoord12'}}},preventDefault(){}})");
+ a.run("prefs.random=false;startSession('l1','learn');nextQuestion();session.learn.errors.set('w1',1);render();");
+ const expected=a.run("JSON.stringify({index:session.index,queue:session.queue})");
+ a.run("location.hash='#list/l1';render();");
+ assert.match(a.get('#app').innerHTML,/Slim leren hervatten/);
+ a.run("startSession('l1','learn');");
+ assert.equal(a.run("JSON.stringify({index:session.index,queue:session.queue})"),expected);
+ assert.equal(a.run("session.learn.errors.get('w1')"),1);
+ a.run("session=null;render()");
+ assert.equal(a.run('session.index'),1);
+ a.run("finishSession();startSession('l1','learn');");
+ assert.equal(a.run('session.index'),0);
+});
+
+test('book text groups numbered paragraphs into searchable chapters',()=>{
+ const a=boot();
+ a.run(`bookData=[readBookText('Duits\\n# Hoofdstuk 1\\n## 1.1 Intro\\ndas Buch - het boek\\n## 1.2 School\\ndie Schule - de school\\n# Hoofdstuk 2\\n## 2.1 Reizen\\nder Zug - de trein')].map(book=>({...book,chapters:book.chapters.map(chapter=>({...chapter,wordCount:chapter.words.length}))}))`);
+ assert.match(a.run('bookRows()'),/Hoofdstuk 1[\s\S]*1\.1 Intro[\s\S]*1\.2 School[\s\S]*Hoofdstuk 2/);
+ a.run("bookSearch='1.2'");
+ assert.match(a.run('bookRows()'),/1\.2 School/);
+ assert.doesNotMatch(a.run('bookRows()'),/1\.1 Intro|2\.1 Reizen/);
 });
